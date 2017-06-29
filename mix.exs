@@ -2,16 +2,23 @@ defmodule Triplex.Mixfile do
   use Mix.Project
 
   def project do
-    [app: :triplex,
-     version: "0.1.0",
-     elixir: "~> 1.4",
-     elixirc_paths: elixirc_paths(Mix.env),
-     build_embedded: Mix.env == :prod,
-     start_permanent: Mix.env == :prod,
-     aliases: aliases(),
-     test_coverage: [tool: ExCoveralls],
-     preferred_cli_env: preferred_cli_env(),
-     deps: deps()]
+    [
+      app: :triplex,
+      version: "0.1.0",
+      elixir: "~> 1.4",
+
+      description: description(),
+      package: package(),
+      elixirc_paths: elixirc_paths(Mix.env),
+      build_embedded: Mix.env == :prod,
+      start_permanent: Mix.env == :prod,
+      aliases: aliases(),
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: preferred_cli_env(),
+      deps: deps(),
+      name: "Triplex",
+      source_url: "https://github.com/ateliware/triplex"
+    ]
   end
 
   # Configuration for the OTP application
@@ -43,6 +50,7 @@ defmodule Triplex.Mixfile do
       {:ecto, "~> 2.1"},
       {:postgrex, ">= 0.11.0"},
 
+      {:ex_doc, ">= 0.0.0", only: :dev},
       {:excoveralls, "~> 0.6", only: :test}
     ]
   end
@@ -58,6 +66,24 @@ defmodule Triplex.Mixfile do
      "test.reset": ["ecto.drop", "ecto.create", "db.migrate"],
      "test.cover": &run_default_coverage/1,
      "test.cover.html": &run_html_coverage/1]
+  end
+
+  defp description do
+    """
+    An https://github.com/influitive/apartment for succesfull Phoenix
+		programmers.
+    """
+  end
+
+  defp package do
+    # These are the default files included in the package
+    [
+      name: :triplex,
+      files: ["lib", "mix.exs", "README*", "LICENSE*"],
+      maintainers: ["Kelvin Stinghen"],
+      licenses: ["MIT"],
+      links: %{"GitHub" => "https://github.com/ateliware/triplex"}
+    ]
   end
 
   defp preferred_cli_env do

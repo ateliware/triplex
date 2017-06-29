@@ -1,0 +1,23 @@
+language: elixir
+elixir:
+  - 1.4.2
+otp_release:
+  - '19.0'
+addons:
+  postgresql: '9.4'
+
+install:
+  - mix local.rebar --force
+  - mix local.hex --force
+  - mix deps.get
+
+env:
+  global:
+    - MIX_ENV=test
+    - DATABASE_NAME=travis_ci_test
+
+before_script:
+  - psql -c 'create database travis_ci_test;' -U postgres
+  - mix test.reset
+script:
+  - mix test.cover

@@ -1,0 +1,10 @@
+{
+  "skip_files": [
+    "test/support"
+  ],
+  "coverage_options": {
+    // TODO - get a bigger coverage here!
+    "minimum_coverage": 35,
+    "treat_no_relevant_lines_as_covered": true
+  }
+}

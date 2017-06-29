@@ -1,0 +1,18 @@
+app:
+  build: .
+  command: bash -c 'while [ true ]; do sleep 10; done'
+  environment:
+    - PG_HOST=postgres
+    - PG_USERNAME=postgres
+    - PG_PASSWORD=postgres
+  volumes:
+    - .:/app
+  links:
+    - postgres
+
+postgres:
+  image: postgres:9.5
+  environment:
+    - POSTGRES_PASSWORD=postgres
+  ports:
+    - 5432

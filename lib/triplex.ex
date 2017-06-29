@@ -52,6 +52,10 @@ defmodule Triplex do
       |> Repo.all()
 
   """
+  def put_tenant(prefixable, map) when is_map(map) do
+    put_tenant(prefixable, map[tenant_field()])
+  end
+  def put_tenant(prefixable, nil), do: prefixable
   def put_tenant(%Ecto.Changeset{} = changeset, tenant) do
     new_changes =
       changeset.changes
@@ -286,6 +290,10 @@ defmodule Triplex do
     You cannot create the schema because \"#{inspect(tenant)}\" is a reserved
     tenant
     """
+  end
+
+  defp tenant_field do
+    Application.get_env(:triplex, :tenant_field) || :id
   end
 
   defp default_repo do

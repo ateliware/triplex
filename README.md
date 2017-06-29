@@ -1,5 +1,7 @@
 # Triplex
 
+[![Build Status](https://travis-ci.org/ateliware/triplex.svg?branch=master)](https://travis-ci.org/ateliware/triplex)
+
 An [apartment](https://github.com/influitive/apartment) for succesfull Phoenix
 programmers.
 
@@ -7,19 +9,19 @@ programmers.
 
 The package can be installed as:
 
-  1. Add `triplex` to your list of dependencies in `mix.exs`:
+1. Add `triplex` to your list of dependencies in `mix.exs`:
 
-    ```elixir
-    def deps do
-      [{:triplex, "~> 0.1.0"}]
-    end
-    ```
+```elixir
+def deps do
+  [{:triplex, "~> 0.1.0"}]
+end
+```
 
-  2. Run in your shell:
+2. Run in your shell:
 
-    ```bash
-    mix deps.get
-    ```
+```bash
+mix deps.get
+```
 
 ## Configuring
 

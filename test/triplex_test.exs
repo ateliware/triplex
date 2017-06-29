@@ -3,6 +3,9 @@ defmodule TriplexTest do
 
   import Mix.Ecto, only: [build_repo_priv: 1]
 
+  require Ecto.Query
+
+  alias Ecto.Query
   alias Triplex.Note
   alias Triplex.TestRepo
 
@@ -92,6 +95,23 @@ defmodule TriplexTest do
       assert status == :error
       assert error_message == expected_postgres_error
     end
+  end
+
+  test "put_tenant/2 must add the prefix to the given resource" do
+    cs = Note.changeset(%Note{}, %{body: "test"})
+    assert Ecto.get_meta(cs.data, :prefix) == nil
+    cs = Triplex.put_tenant(cs, "trilegau")
+    assert Ecto.get_meta(cs.data, :prefix) == "trilegau"
+
+    note = %Note{}
+    assert Ecto.get_meta(note, :prefix) == nil
+    note = Triplex.put_tenant(note, "trilegau")
+    assert Ecto.get_meta(note, :prefix) == "trilegau"
+
+    query = Query.from(n in Note, select: n.id)
+    assert Map.get(query, :prefix) == nil
+    query = Triplex.put_tenant(query, "trilegau")
+    assert Map.get(query, :prefix) == "trilegau"
   end
 
   defp assert_creates_notes_table(fun) do

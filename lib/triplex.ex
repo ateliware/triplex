@@ -268,7 +268,15 @@ defmodule Triplex do
     end
   end
 
-  defp create_schema(tenant, repo, func) do
+  @doc """
+  Creates the tenant schema/database on the given repo.
+
+  After creating it successfully, the given function callback is called with
+  the tenant and the repo as arguments.
+
+  If the repo is not given, it uses the one you configured.
+  """
+  def create_schema(tenant, repo \\ default_repo(), func \\ nil) do
     if reserved_tenant?(tenant) do
       {:error, reserved_message(tenant)}
     else

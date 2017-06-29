@@ -53,7 +53,7 @@ defmodule Triplex do
 
   """
   def put_tenant(prefixable, map) when is_map(map) do
-    put_tenant(prefixable, map[tenant_field()])
+    put_tenant(prefixable, Map.get(map, tenant_field()))
   end
   def put_tenant(prefixable, nil), do: prefixable
   def put_tenant(%Ecto.Changeset{} = changeset, tenant) do

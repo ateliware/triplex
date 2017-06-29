@@ -100,18 +100,25 @@ defmodule TriplexTest do
   test "put_tenant/2 must add the prefix to the given resource" do
     cs = Note.changeset(%Note{}, %{body: "test"})
     assert Ecto.get_meta(cs.data, :prefix) == nil
-    cs = Triplex.put_tenant(cs, "trilegau")
-    assert Ecto.get_meta(cs.data, :prefix) == "trilegau"
+    assert cs
+           |> Triplex.put_tenant("trilegau")
+           |> Map.fetch!(:data)
+           |> Ecto.get_meta(:prefix) == "trilegau"
 
     note = %Note{}
     assert Ecto.get_meta(note, :prefix) == nil
-    note = Triplex.put_tenant(note, "trilegau")
-    assert Ecto.get_meta(note, :prefix) == "trilegau"
+    assert note
+           |> Triplex.put_tenant("trilegau")
+           |> Ecto.get_meta(:prefix) == "trilegau"
 
     query = Query.from(n in Note, select: n.id)
     assert Map.get(query, :prefix) == nil
-    query = Triplex.put_tenant(query, "trilegau")
-    assert Map.get(query, :prefix) == "trilegau"
+    assert query
+           |> Triplex.put_tenant("trilegau")
+           |> Map.get(:prefix) == "trilegau"
+    assert query
+           |> Triplex.put_tenant(%{id: "tri"})
+           |> Map.get(:prefix) == "tri"
   end
 
   defp assert_creates_notes_table(fun) do

@@ -1,9 +1,43 @@
 defmodule Triplex do
   @moduledoc """
-  This lib is basically a wrapper to the prefix ecto's functionality.
+  Triplex is a simple schema/database tenant manager for elixir.
 
   The main objetive of it is to make a little bit easier to manage tenants
-  through postgres db schemas.
+  through postgres db schemas or equivalents, executing queries and commands
+  inside and outside the tenant without much boilerplate code.
+
+  ## Configuring
+
+  All you need to do in your project to start using it is to configure the Repo
+  you will use to execute the database commands with:
+
+      config :triplex, repo: ExampleApp.Repo
+
+  ## Creating tables and schemas
+
+  To create a table inside your tenant you can use the task
+  `mix triplex.gen.migration` or move a normal migration to the
+  `priv/YOUR_REPO/tenant_migrations` folder.
+
+  The schemas look the same way, nothing to change.
+
+  To run the tenant migrations, use the task `mix triplex.migrate`, it will
+  migrate all your existent tenants for you.
+
+  ## Managing your tenants
+
+  You can use the functions `Triplex.create/1`, `Triplex.drop/1` and
+  `Triplex.rename/2` to manage your tenants. You may want to use them on your
+  tenant operations.
+
+  PS.: we encourage you to use an unchangable field as your tenant name, that
+  way you will not need to rename your tenant when changing the field.
+
+  ## Using the tenant
+
+  Finally, but not less important, you must call the function
+  `Triplex.put_tenant\2` to any changeset, schema or query you are executing
+  on your "tenanted" tables.
   """
 
   import Mix.Ecto, only: [build_repo_priv: 1]
@@ -12,6 +46,87 @@ defmodule Triplex do
     Migrator
   }
 
+  @doc """
+  Sets the tenant as the prefix for the changeset, schema or anything
+  queryable.
+
+  ## Examples
+
+      defmodule User do
+        use Ecto.Schema
+
+        import Ecto.Changeset
+
+        schema "users" do
+          field :name, :string
+        end
+
+        def changeset(user, params) do
+          cast(user, params, [:name])
+        end
+      end
+
+      import Ecto.Query
+
+      # For the changeset
+      %User{}
+      |> User.changeset(%{name: "John"})
+      |> Triplex.put_tenant("my_tenant")
+      |> Repo.insert!()
+
+      # For the schema
+      User
+      |> Triplex.put_tenant("my_tenant")
+      |> Repo.all()
+
+      # For the queries
+      from(u in User, select: count(id))
+      |> Triplex.put_tenant("my_tenant")
+      |> Repo.all()
+
+  """
+  def put_tenant(%Ecto.Changeset{} = changeset, tenant) do
+    new_changes =
+      changeset.changes
+      |> Map.to_list
+      |> Enum.reduce(%{}, fn({key, value}, acc) ->
+        new_value = case {key, value} do
+          {key, value} when key in [:__struct__, :__meta__] -> value
+          {_, %Ecto.Changeset{} = changeset} -> put_tenant(changeset, tenant)
+          {_, value} -> value
+        end
+        Map.put(acc, key, new_value)
+      end)
+    changeset = %{changeset | changes: new_changes}
+
+    %{changeset | data: put_tenant(changeset.data, tenant)}
+  end
+  def put_tenant(%{__struct__: _, __meta__: _} = schema, tenant) do
+    schema
+    |> Map.to_list
+    |> Enum.reduce(%{}, fn({key, value}, acc) ->
+      new_value = case {key, value} do
+        {key, value} when key in [:__struct__, :__meta__] -> value
+        {_, %{__struct__: _, __meta__: _} = struct} ->
+          put_tenant(struct, tenant)
+        {_, value} -> value
+      end
+      Map.put(acc, key, new_value)
+    end)
+    |> Ecto.put_meta(prefix: tenant)
+  end
+  def put_tenant(queryable, tenant) do
+    if Ecto.Queryable.impl_for(queryable) do
+      query = Ecto.Queryable.to_query(queryable)
+      Map.put(query, :prefix, tenant)
+    else
+      queryable
+    end
+  end
+
+  @doc """
+  Execute the given function with the given tenant set.
+  """
   def with_tenant(tenant, func) do
     old_tenant = current_tenant()
     put_current_tenant(tenant)
@@ -22,8 +137,14 @@ defmodule Triplex do
     end
   end
 
+  @doc """
+  Return the current tenant, set by `put_current_tenant/1`.
+  """
   def current_tenant, do: Process.get(__MODULE__)
 
+  @doc """
+  Sets the current tenant in the current process.
+  """
   def put_current_tenant(nil), do: Process.put(__MODULE__, nil)
   def put_current_tenant(value) when is_binary(value) do
     Process.put __MODULE__, value
@@ -32,19 +153,27 @@ defmodule Triplex do
     raise ArgumentError, "put_current_tenant/1 only accepts binary tenants"
   end
 
-  def prefix_excluded_models do
-    Application.get_env(:triplex, :prefix_excluded_models)
-  end
+  @doc """
+  Returns the list of reserverd tenants.
 
-  def default_repo do
-    Application.get_env(:triplex, :repo)
-  end
+  By default, there are some limitations for the name of a tenant depending on
+  the database, like "public" or anything that start with "pg_".
 
+  You also can configure your own reserved tenant names if you want with:
+
+      config :triplex, reserved_tenants: ["www", "api", ~r/^db\d+$/]
+
+  Notice that you can use regexes, and they will be applied to the tenant
+  names.
+  """
   def reserved_tenants do
     config = Application.get_env(:triplex, :reserved_tenants) || []
     [nil, "public", "information_schema", ~r/^pg_/ | config]
   end
 
+  @doc """
+  Returns if the given tenant is reserved or not.
+  """
   def reserved_tenant?(tenant) do
     Enum.any? reserved_tenants(), fn (i) ->
       if Regex.regex?(i) do
@@ -55,18 +184,120 @@ defmodule Triplex do
     end
   end
 
-  def reserved_message(tenant) do
-    """
-    You cannot create the schema because \"#{inspect(tenant)}\" is a reserved
-    tenant
-    """
-  end
+  @doc """
+  Creates the given tenant on the given repo.
 
+  Besides creating the database itself, this function also loads their
+  structure executing all migrations from inside
+  `priv/YOUR_REPO/tenant_migrations` folder.
+
+  If the repo is not given, it uses the one you configured.
+  """
   def create(tenant, repo \\ default_repo()) do
     create_schema(tenant, repo, &(migrate(&1, &2)))
   end
 
-  def create_schema(tenant, repo \\ default_repo(), func \\ nil) do
+  @doc """
+  Drops the given tenant on the given repo.
+
+  If the repo is not given, it uses the one you configured.
+  """
+  def drop(tenant, repo \\ default_repo()) do
+    if reserved_tenant?(tenant) do
+      {:error, reserved_message(tenant)}
+    else
+      case SQL.query(repo, "DROP SCHEMA \"#{tenant}\" CASCADE", []) do
+        {:error, e} ->
+          {:error, Postgrex.Error.message(e)}
+        result -> result
+      end
+    end
+  end
+
+  @doc """
+  Renames the given tenant on the given repo.
+
+  If the repo is not given, it uses the one you configured.
+  """
+  def rename(old_tenant, new_tenant, repo \\ default_repo()) do
+    if reserved_tenant?(new_tenant) do
+      {:error, reserved_message(new_tenant)}
+    else
+      sql = "ALTER SCHEMA \"#{old_tenant}\" RENAME TO \"#{new_tenant}\""
+      case SQL.query(repo, sql, []) do
+        {:error, e} ->
+          {:error, Postgrex.Error.message(e)}
+        result -> result
+      end
+    end
+  end
+
+  @doc """
+  Returns all the tenants on the given repo.
+
+  If the repo is not given, it uses the one you configured.
+  """
+  def all(repo \\ default_repo()) do
+    sql = """
+      SELECT schema_name
+      FROM information_schema.schemata
+      """
+    %Postgrex.Result{rows: result} = SQL.query!(repo, sql, [])
+
+    result
+    |> List.flatten
+    |> Enum.filter(&(!reserved_tenant?(&1)))
+  end
+
+  @doc """
+  Returns if the tenant exists or not on the given repo.
+
+  If the repo is not given, it uses the one you configured.
+  """
+  def exists?(tenant, repo \\ default_repo()) do
+    if reserved_tenant?(tenant) do
+      false
+    else
+      sql = """
+        SELECT COUNT(*)
+        FROM information_schema.schemata
+        WHERE schema_name = $1
+        """
+      %Postgrex.Result{rows: [[count]]} = SQL.query!(repo, sql, [tenant])
+      count == 1
+    end
+  end
+
+  @doc """
+  Migrates the given tenant.
+
+  If the repo is not given, it uses the one you configured.
+  """
+  def migrate(tenant, repo \\ default_repo()) do
+    try do
+      {:ok, Migrator.run(repo, migrations_path(repo), :up,
+                         all: true,
+                         prefix: tenant)}
+    rescue
+      e in Postgrex.Error ->
+        {:error, Postgrex.Error.message(e)}
+    end
+  end
+
+  @doc """
+  Return the path for your tenant migrations.
+
+  If the repo is not given, it uses the one you configured.
+  """
+  def migrations_path(repo \\ default_repo()) do
+    if repo do
+      Path.join(build_repo_priv(repo), "tenant_migrations")
+    else
+      ""
+    end
+  end
+
+  defp create_schema(tenant, repo, func) do
     if reserved_tenant?(tenant) do
       {:error, reserved_message(tenant)}
     else
@@ -83,73 +314,14 @@ defmodule Triplex do
     end
   end
 
-  def drop(tenant, repo \\ default_repo()) do
-    if reserved_tenant?(tenant) do
-      {:error, reserved_message(tenant)}
-    else
-      case SQL.query(repo, "DROP SCHEMA \"#{tenant}\" CASCADE", []) do
-        {:error, e} ->
-          {:error, Postgrex.Error.message(e)}
-        result -> result
-      end
-    end
+  defp reserved_message(tenant) do
+    """
+    You cannot create the schema because \"#{inspect(tenant)}\" is a reserved
+    tenant
+    """
   end
 
-  def rename(old_tenant, new_tenant, repo \\ default_repo()) do
-    if reserved_tenant?(new_tenant) do
-      {:error, reserved_message(new_tenant)}
-    else
-      sql = "ALTER SCHEMA \"#{old_tenant}\" RENAME TO \"#{new_tenant}\""
-      case SQL.query(repo, sql, []) do
-        {:error, e} ->
-          {:error, Postgrex.Error.message(e)}
-        result -> result
-      end
-    end
-  end
-
-  def all(repo \\ default_repo()) do
-    sql = """
-      SELECT schema_name
-      FROM information_schema.schemata
-      """
-    %Postgrex.Result{rows: result} = SQL.query!(repo, sql, [])
-
-    result
-    |> List.flatten
-    |> Enum.filter(&(!reserved_tenant?(&1)))
-  end
-
-  def exists?(tenant, repo \\ default_repo()) do
-    if reserved_tenant?(tenant) do
-      false
-    else
-      sql = """
-        SELECT COUNT(*)
-        FROM information_schema.schemata
-        WHERE schema_name = $1
-        """
-      %Postgrex.Result{rows: [[count]]} = SQL.query!(repo, sql, [tenant])
-      count == 1
-    end
-  end
-
-  def migrations_path(repo \\ default_repo()) do
-    if repo do
-      Path.join(build_repo_priv(repo), "tenant_migrations")
-    else
-      ""
-    end
-  end
-
-  def migrate(tenant, repo \\ default_repo()) do
-    try do
-      {:ok, Migrator.run(repo, migrations_path(repo), :up,
-                         all: true,
-                         prefix: tenant)}
-    rescue
-      e in Postgrex.Error ->
-        {:error, Postgrex.Error.message(e)}
-    end
+  defp default_repo do
+    Application.get_env(:triplex, :repo)
   end
 end

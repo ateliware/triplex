@@ -4,7 +4,7 @@ defmodule Triplex.Mixfile do
   def project do
     [
       app: :triplex,
-      version: "0.2.0",
+      version: "0.2.2",
       elixir: "~> 1.4",
 
       description: description(),
@@ -16,6 +16,7 @@ defmodule Triplex.Mixfile do
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: preferred_cli_env(),
       deps: deps(),
+      docs: [main: "readme", extras: ["README.md"]],
       name: "Triplex",
       source_url: "https://github.com/ateliware/triplex"
     ]

@@ -51,6 +51,6 @@ way you will not need to rename your tenant when changing the field.
 ## Using the tenant
 
 Finally, but not less important, you must call the function
-`Triplex.put_tenant\2` to any changeset, schema or query you are executing
+`Triplex.put_tenant/2` to any changeset, schema or query you are executing
 on your "tenanted" tables.
 

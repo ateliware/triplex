@@ -13,9 +13,7 @@ defmodule Triplex do
     Migrator
   }
 
-  @config struct(Triplex.Config, Application.get_all_env(:triplex))
-
-  def __config__, do: @config
+  def config, do: struct(Triplex.Config, Application.get_all_env(:triplex))
 
   @doc """
   Sets the tenant as the prefix for the changeset, schema or anything
@@ -57,7 +55,7 @@ defmodule Triplex do
 
   """
   def put_tenant(prefixable, map) when is_map(map) do
-    put_tenant(prefixable, Map.get(map, @config.tenant_field))
+    put_tenant(prefixable, Map.get(map, config().tenant_field))
   end
   def put_tenant(prefixable, nil), do: prefixable
   def put_tenant(%Ecto.Changeset{} = changeset, tenant) do
@@ -66,8 +64,6 @@ defmodule Triplex do
       |> Map.to_list
       |> Enum.reduce(%{}, fn({key, value}, acc) ->
         new_value = case {key, value} do
-          {key, value} when key in [:__struct__, :__meta__] ->
-            value
           {_, list} when is_list(list) ->
             Enum.map(list, &put_tenant(&1, tenant))
           {_, %Ecto.Changeset{} = changeset} ->
@@ -151,7 +147,8 @@ defmodule Triplex do
   names.
   """
   def reserved_tenants do
-    [nil, "public", "information_schema", ~r/^pg_/ | @config.reserved_tenants]
+    [nil, "public", "information_schema", ~r/^pg_/ |
+     config().reserved_tenants]
   end
 
   @doc """
@@ -176,7 +173,7 @@ defmodule Triplex do
 
   If the repo is not given, it uses the one you configured.
   """
-  def create(tenant, repo \\ @config.repo) do
+  def create(tenant, repo \\ config().repo) do
     create_schema(tenant, repo, &(migrate(&1, &2)))
   end
 
@@ -185,7 +182,7 @@ defmodule Triplex do
 
   If the repo is not given, it uses the one you configured.
   """
-  def drop(tenant, repo \\ @config.repo) do
+  def drop(tenant, repo \\ config().repo) do
     if reserved_tenant?(tenant) do
       {:error, reserved_message(tenant)}
     else
@@ -202,7 +199,7 @@ defmodule Triplex do
 
   If the repo is not given, it uses the one you configured.
   """
-  def rename(old_tenant, new_tenant, repo \\ @config.repo) do
+  def rename(old_tenant, new_tenant, repo \\ config().repo) do
     if reserved_tenant?(new_tenant) do
       {:error, reserved_message(new_tenant)}
     else
@@ -220,7 +217,7 @@ defmodule Triplex do
 
   If the repo is not given, it uses the one you configured.
   """
-  def all(repo \\ @config.repo) do
+  def all(repo \\ config().repo) do
     sql = """
       SELECT schema_name
       FROM information_schema.schemata
@@ -237,7 +234,7 @@ defmodule Triplex do
 
   If the repo is not given, it uses the one you configured.
   """
-  def exists?(tenant, repo \\ @config.repo) do
+  def exists?(tenant, repo \\ config().repo) do
     if reserved_tenant?(tenant) do
       false
     else
@@ -256,7 +253,7 @@ defmodule Triplex do
 
   If the repo is not given, it uses the one you configured.
   """
-  def migrate(tenant, repo \\ @config.repo) do
+  def migrate(tenant, repo \\ config().repo) do
     try do
       {:ok, Migrator.run(repo, migrations_path(repo), :up,
                          all: true,
@@ -272,7 +269,7 @@ defmodule Triplex do
 
   If the repo is not given, it uses the one you configured.
   """
-  def migrations_path(repo \\ @config.repo) do
+  def migrations_path(repo \\ config().repo) do
     if repo do
       Path.join(build_repo_priv(repo), "tenant_migrations")
     else
@@ -288,7 +285,7 @@ defmodule Triplex do
 
   If the repo is not given, it uses the one you configured.
   """
-  def create_schema(tenant, repo \\ @config.repo, func \\ nil) do
+  def create_schema(tenant, repo \\ config().repo, func \\ nil) do
     if reserved_tenant?(tenant) do
       {:error, reserved_message(tenant)}
     else

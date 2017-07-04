@@ -101,6 +101,10 @@ defmodule TriplexTest do
     cs = Note.changeset(%Note{}, %{body: "test"})
     assert Ecto.get_meta(cs.data, :prefix) == nil
     assert cs
+           |> Triplex.put_tenant(nil)
+           |> Map.fetch!(:data)
+           |> Ecto.get_meta(:prefix) == nil
+    assert cs
            |> Triplex.put_tenant("trilegau")
            |> Map.fetch!(:data)
            |> Ecto.get_meta(:prefix) == "trilegau"
@@ -140,6 +144,23 @@ defmodule TriplexTest do
            |> Triplex.put_tenant("trilegau")
            |> Ecto.get_meta(:prefix) == "trilegau"
 
+    note = %Note{parent: %Note{}}
+    assert Ecto.get_meta(note, :prefix) == nil
+    assert note
+           |> Triplex.put_tenant("trilegau")
+           |> Map.fetch!(:parent)
+           |> Ecto.get_meta(:prefix) == "trilegau"
+
+    note = %Note{children: [%Note{}, %Note{}]}
+    assert Ecto.get_meta(note, :prefix) == nil
+    tenanted_note = Triplex.put_tenant(note, "trilegau")
+    assert Ecto.get_meta(tenanted_note, :prefix) == "trilegau"
+    tenanted_note
+    |> Map.fetch!(:children)
+    |> Enum.map(fn(child) ->
+      assert Ecto.get_meta(child, :prefix) == "trilegau"
+    end)
+
     query = Query.from(n in Note, select: n.id)
     assert Map.get(query, :prefix) == nil
     assert query
@@ -148,6 +169,8 @@ defmodule TriplexTest do
     assert query
            |> Triplex.put_tenant(%{id: "tri"})
            |> Map.get(:prefix) == "tri"
+
+    assert Triplex.put_tenant(%{}, "lala") == %{}
   end
 
   defp assert_creates_notes_table(fun) do

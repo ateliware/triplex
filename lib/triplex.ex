@@ -55,7 +55,7 @@ defmodule Triplex do
 
   """
   def put_tenant(prefixable, map) when is_map(map) do
-    put_tenant(prefixable, Map.get(map, config().tenant_field))
+    put_tenant(prefixable, tenant_field(map))
   end
   def put_tenant(prefixable, nil), do: prefixable
   def put_tenant(%Ecto.Changeset{} = changeset, tenant) do
@@ -93,12 +93,12 @@ defmodule Triplex do
       end
       Map.put(acc, key, new_value)
     end)
-    |> Ecto.put_meta(prefix: tenant)
+    |> Ecto.put_meta(prefix: to_prefix(tenant))
   end
   def put_tenant(queryable, tenant) do
     if Ecto.Queryable.impl_for(queryable) do
       query = Ecto.Queryable.to_query(queryable)
-      Map.put(query, :prefix, tenant)
+      Map.put(query, :prefix, to_prefix(tenant))
     else
       queryable
     end
@@ -157,7 +157,7 @@ defmodule Triplex do
   def reserved_tenant?(tenant) do
     Enum.any? reserved_tenants(), fn (i) ->
       if Regex.regex?(i) do
-        Regex.match?(i, tenant)
+        Regex.match?(i, to_prefix(tenant))
       else
         i == tenant
       end
@@ -174,7 +174,9 @@ defmodule Triplex do
   If the repo is not given, it uses the one you configured.
   """
   def create(tenant, repo \\ config().repo) do
-    create_schema(tenant, repo, &(migrate(&1, &2)))
+    tenant
+    |> to_prefix()
+    |> create_schema(repo, &(migrate(&1, &2)))
   end
 
   @doc """
@@ -186,7 +188,8 @@ defmodule Triplex do
     if reserved_tenant?(tenant) do
       {:error, reserved_message(tenant)}
     else
-      case SQL.query(repo, "DROP SCHEMA \"#{tenant}\" CASCADE", []) do
+      sql = "DROP SCHEMA \"#{to_prefix(tenant)}\" CASCADE"
+      case SQL.query(repo, sql, []) do
         {:error, e} ->
           {:error, Postgrex.Error.message(e)}
         result -> result
@@ -203,7 +206,10 @@ defmodule Triplex do
     if reserved_tenant?(new_tenant) do
       {:error, reserved_message(new_tenant)}
     else
-      sql = "ALTER SCHEMA \"#{old_tenant}\" RENAME TO \"#{new_tenant}\""
+      sql = """
+      ALTER SCHEMA \"#{to_prefix(old_tenant)}\"
+      RENAME TO \"#{to_prefix(new_tenant)}\"
+      """
       case SQL.query(repo, sql, []) do
         {:error, e} ->
           {:error, Postgrex.Error.message(e)}
@@ -243,7 +249,8 @@ defmodule Triplex do
         FROM information_schema.schemata
         WHERE schema_name = $1
         """
-      %Postgrex.Result{rows: [[count]]} = SQL.query!(repo, sql, [tenant])
+      %Postgrex.Result{rows: [[count]]} =
+        SQL.query!(repo, sql, [to_prefix(tenant)])
       count == 1
     end
   end
@@ -257,7 +264,7 @@ defmodule Triplex do
     try do
       {:ok, Migrator.run(repo, migrations_path(repo), :up,
                          all: true,
-                         prefix: tenant)}
+                         prefix: to_prefix(tenant))}
     rescue
       e in Postgrex.Error ->
         {:error, Postgrex.Error.message(e)}
@@ -289,7 +296,7 @@ defmodule Triplex do
     if reserved_tenant?(tenant) do
       {:error, reserved_message(tenant)}
     else
-      case SQL.query(repo, "CREATE SCHEMA \"#{tenant}\"", []) do
+      case SQL.query(repo, "CREATE SCHEMA \"#{to_prefix(tenant)}\"", []) do
         {:ok, _} = result ->
           if func do
             func.(tenant, repo)
@@ -300,6 +307,25 @@ defmodule Triplex do
           {:error, Postgrex.Error.message(e)}
       end
     end
+  end
+
+  @doc """
+  Returns the tenant name with the configured prefix.
+  """
+  def to_prefix(tenant, prefix \\ config().tenant_prefix)
+  def to_prefix(map, prefix) when is_map(map) do
+    map
+    |> tenant_field()
+    |> to_prefix(prefix)
+  end
+  def to_prefix(tenant, nil), do: tenant
+  def to_prefix(tenant, prefix), do: prefix <> tenant
+
+  @doc """
+  Returns the value of the configured tenant field on the given map.
+  """
+  def tenant_field(map) do
+    Map.get(map, config().tenant_field)
   end
 
   defp reserved_message(tenant) do

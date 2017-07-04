@@ -1,4 +1,4 @@
 defmodule Triplex.Config do
-  defstruct repo: nil, reserved_tenants: [], tenant_field: :id
+  defstruct [:repo, :tenant_prefix, reserved_tenants: [], tenant_field: :id]
 end
 

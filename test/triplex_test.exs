@@ -19,9 +19,26 @@ defmodule TriplexTest do
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(@repo)
   end
 
+  test "with_tenant/2 must execute the given function in the given tenant" do
+    Triplex.put_current_tenant("oi")
+    assert Triplex.current_tenant() == "oi"
+
+    Triplex.with_tenant "io", fn ->
+      assert Triplex.current_tenant() == "io"
+    end
+    assert Triplex.current_tenant() == "oi"
+  end
+
   test "put_current_tenant/2 must save the current tenant" do
     Triplex.put_current_tenant("io")
     assert Triplex.current_tenant() == "io"
+
+    Triplex.put_current_tenant(nil)
+    assert Triplex.current_tenant() == nil
+
+    assert_raise ArgumentError, fn ->
+      Triplex.put_current_tenant(10)
+    end
   end
 
   test "create/2 must create a new tenant" do
@@ -171,6 +188,13 @@ defmodule TriplexTest do
            |> Map.get(:prefix) == "tri"
 
     assert Triplex.put_tenant(%{}, "lala") == %{}
+  end
+
+  test "to_prefix/2 must apply the given prefix to the tenant name" do
+    assert Triplex.to_prefix("a", nil) == "a"
+    assert Triplex.to_prefix(%{id: "a"}, nil) == "a"
+    assert Triplex.to_prefix("a", "b") == "ba"
+    assert Triplex.to_prefix(%{id: "a"}, "b") == "ba"
   end
 
   defp assert_creates_notes_table(fun) do

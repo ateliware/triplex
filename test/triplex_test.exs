@@ -97,13 +97,42 @@ defmodule TriplexTest do
     end
   end
 
-  test "put_tenant/2 must add the prefix to the given resource" do
+  test "put_tenant/2 must add the prefix to the given resource recursively" do
     cs = Note.changeset(%Note{}, %{body: "test"})
     assert Ecto.get_meta(cs.data, :prefix) == nil
     assert cs
            |> Triplex.put_tenant("trilegau")
            |> Map.fetch!(:data)
            |> Ecto.get_meta(:prefix) == "trilegau"
+
+    cs = Note.changeset(%Note{}, %{body: "test", parent: %{body: "parent"}})
+    assert Ecto.get_meta(cs.data, :prefix) == nil
+    tenanted_cs = Triplex.put_tenant(cs, "trilegau")
+    assert tenanted_cs
+           |> Map.fetch!(:data)
+           |> Ecto.get_meta(:prefix) == "trilegau"
+    assert tenanted_cs
+           |> Map.fetch!(:changes)
+           |> Map.fetch!(:parent)
+           |> Map.fetch!(:data)
+           |> Ecto.get_meta(:prefix) == "trilegau"
+
+    cs = Note.changeset(%Note{},
+                        %{body: "test",
+                          children: [%{body: "child1"}, %{body: "child2"}]})
+    assert Ecto.get_meta(cs.data, :prefix) == nil
+    tenanted_cs = Triplex.put_tenant(cs, "trilegau")
+    assert tenanted_cs
+           |> Map.fetch!(:data)
+           |> Ecto.get_meta(:prefix) == "trilegau"
+    tenanted_cs
+    |> Map.fetch!(:changes)
+    |> Map.fetch!(:children)
+    |> Enum.map(fn(child) ->
+      assert child
+             |> Map.fetch!(:data)
+             |> Ecto.get_meta(:prefix) == "trilegau"
+    end)
 
     note = %Note{}
     assert Ecto.get_meta(note, :prefix) == nil

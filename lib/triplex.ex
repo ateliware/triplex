@@ -66,9 +66,14 @@ defmodule Triplex do
       |> Map.to_list
       |> Enum.reduce(%{}, fn({key, value}, acc) ->
         new_value = case {key, value} do
-          {key, value} when key in [:__struct__, :__meta__] -> value
-          {_, %Ecto.Changeset{} = changeset} -> put_tenant(changeset, tenant)
-          {_, value} -> value
+          {key, value} when key in [:__struct__, :__meta__] ->
+            value
+          {_, list} when is_list(list) ->
+            Enum.map(list, &put_tenant(&1, tenant))
+          {_, %Ecto.Changeset{} = changeset} ->
+            put_tenant(changeset, tenant)
+          {_, value} ->
+            value
         end
         Map.put(acc, key, new_value)
       end)
@@ -81,10 +86,14 @@ defmodule Triplex do
     |> Map.to_list
     |> Enum.reduce(%{}, fn({key, value}, acc) ->
       new_value = case {key, value} do
-        {key, value} when key in [:__struct__, :__meta__] -> value
+        {key, value} when key in [:__struct__, :__meta__] ->
+          value
+        {_, list} when is_list(list) ->
+          Enum.map(list, &put_tenant(&1, tenant))
         {_, %{__struct__: _, __meta__: _} = struct} ->
           put_tenant(struct, tenant)
-        {_, value} -> value
+        {_, value} ->
+          value
       end
       Map.put(acc, key, new_value)
     end)

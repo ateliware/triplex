@@ -32,27 +32,60 @@ you will use to execute the database commands with:
 
 ## Creating tables and schemas
 
-To create a table inside your tenant you can use the task
-`mix triplex.gen.migration` or move a normal migration to the
+To create a table inside your tenant you can use:
+
+```bash
+mix triplex.gen.migration
+```
+
+Also, you can move a normally generated migration to the
 `priv/YOUR_REPO/tenant_migrations` folder.
 
 The schemas look the same way, nothing to change.
 
-To run the tenant migrations, use the task `mix triplex.migrate`, it will
-migrate all your existent tenants for you.
+To run the tenant migrations, just run:
+
+```bash
+mix triplex.migrate
+```
+
+This task will migrate all your existent tenants, one by one.
 
 ## Managing your tenants
 
-You can use the functions `Triplex.create/1`, `Triplex.drop/1` and
-`Triplex.rename/2` to manage your tenants. You may want to use them on your
-tenant operations.
+To create a tenant:
 
-PS.: we encourage you to use an unchangable field as your tenant name, that
+```elixir
+Triplex.create("your_tenant")
+```
+
+PS.: this will run the migrations, so it's a function that takes a while to
+complete depending on how much migrations you have.
+
+If you change your mind and want to rename te tenant:
+
+```elixir
+Triplex.rename("your_tenant", "my_tenant")
+```
+
+PS.: we encourage you to use an unchangable thing as your tenant name, that
 way you will not need to rename your tenant when changing the field.
+
+And if you're sick of it and want to drop:
+
+```elixir
+Triplex.drop("my_tenant")
+```
 
 ## Using the tenant
 
-Finally, but not less important, you must call the function
-`Triplex.put_tenant/2` to any changeset, schema or query you are executing
-on your "tenanted" tables.
+To use your tenant is quite easy. Just send a `prefix` opt on your repo call
+with your current tenant name. Like this:
 
+```elixir
+Repo.all(User, prefix: Triplex.to_prefix("my_tenant"))
+```
+
+It's a good idea to call `Triplex.to_prefix` on your tenant name, altough is
+not required. Because, if you configured a `tenant_prefix`, this function will
+return the prefixed one.

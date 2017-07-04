@@ -5,6 +5,19 @@ defmodule Triplex do
   The main objetive of it is to make a little bit easier to manage tenants
   through postgres db schemas or equivalents, executing queries and commands
   inside and outside the tenant without much boilerplate code.
+
+  ## Using the tenant
+
+  This module has useful functions to manage your tenants, like `create/1`,
+  `rename/2` and `drop/1`, but if you're trying to apply the tenant to a
+  query, changeset or schema, stay with your application `Repo`, sending the
+  prefix. Like this:
+
+      Repo.all(User, prefix: Triplex.to_prefix("my_tenant"))
+
+  It's a good idea to call `Triplex.to_prefix` on your tenant name, altough is
+  not required. Because, if you configured a `tenant_prefix`, this function will
+  return the prefixed one.
   """
 
   import Mix.Ecto, only: [build_repo_priv: 1]
@@ -16,43 +29,22 @@ defmodule Triplex do
   def config, do: struct(Triplex.Config, Application.get_all_env(:triplex))
 
   @doc """
-  Sets the tenant as the prefix for the changeset, schema or anything
-  queryable.
+  This function has been deprecated.
 
-  ## Examples
+  Use the `prefix` key in your `Repo` calls opts instead.
 
-      defmodule User do
-        use Ecto.Schema
+  For example, instead of:
 
-        import Ecto.Changeset
+      User |> Triplex.put_tenant("my_tenant") |> Repo.all()
 
-        schema "users" do
-          field :name, :string
-        end
+  User:
 
-        def changeset(user, params) do
-          cast(user, params, [:name])
-        end
-      end
+      Repo.all(User, prefix: "my_tenant")
 
-      import Ecto.Query
+  Don't forget to apply the `Triplex.to_prefix/1` to transform your tenant to
+  a prefix if you configured a `tenant_prefix` on your triplex configuration.
 
-      # For the changeset
-      %User{}
-      |> User.changeset(%{name: "John"})
-      |> Triplex.put_tenant("my_tenant")
-      |> Repo.insert!()
-
-      # For the schema
-      User
-      |> Triplex.put_tenant("my_tenant")
-      |> Repo.all()
-
-      # For the queries
-      from(u in User, select: count(id))
-      |> Triplex.put_tenant("my_tenant")
-      |> Repo.all()
-
+  By default, you will not need it.
   """
   def put_tenant(prefixable, map) when is_map(map) do
     put_tenant(prefixable, tenant_field(map))
@@ -78,6 +70,8 @@ defmodule Triplex do
     %{changeset | data: put_tenant(changeset.data, tenant)}
   end
   def put_tenant(%{__struct__: _, __meta__: _} = schema, tenant) do
+    warn_put_tenant_deprecated()
+
     schema
     |> Map.to_list
     |> Enum.reduce(%{}, fn({key, value}, acc) ->
@@ -96,6 +90,8 @@ defmodule Triplex do
     |> Ecto.put_meta(prefix: to_prefix(tenant))
   end
   def put_tenant(queryable, tenant) do
+    warn_put_tenant_deprecated()
+
     if Ecto.Queryable.impl_for(queryable) do
       query = Ecto.Queryable.to_query(queryable)
       Map.put(query, :prefix, to_prefix(tenant))
@@ -104,10 +100,20 @@ defmodule Triplex do
     end
   end
 
+  defp warn_put_tenant_deprecated() do
+    IO.warn("""
+    Triplex.put_tenant/2 is deprecated. Use the `prefix` key in your `Repo`
+    calls opts instead.
+    """)
+  end
+
   @doc """
   Execute the given function with the given tenant set.
   """
   def with_tenant(tenant, func) do
+    IO.warn("""
+    Triplex.with_tenant/2 is deprecated due to its not concurrency safe nature
+    """)
     old_tenant = current_tenant()
     put_current_tenant(tenant)
     try do
@@ -120,17 +126,34 @@ defmodule Triplex do
   @doc """
   Return the current tenant, set by `put_current_tenant/1`.
   """
-  def current_tenant, do: Process.get(__MODULE__)
+  def current_tenant do
+    IO.warn("""
+    Triplex.current_tenant/0 is deprecated due to its not concurrency safe
+    nature
+    """)
+    Process.get(__MODULE__)
+  end
 
   @doc """
   Sets the current tenant in the current process.
   """
-  def put_current_tenant(nil), do: Process.put(__MODULE__, nil)
+  def put_current_tenant(nil) do
+    warn_put_current_tenant_deprecated()
+    Process.put(__MODULE__, nil)
+  end
   def put_current_tenant(value) when is_binary(value) do
+    warn_put_current_tenant_deprecated()
     Process.put __MODULE__, value
   end
   def put_current_tenant(_) do
     raise ArgumentError, "put_current_tenant/1 only accepts binary tenants"
+  end
+
+  defp warn_put_current_tenant_deprecated() do
+    IO.warn("""
+    Triplex.put_current_tenant/1 is deprecated due to its not concurrency safe
+    nature
+    """)
   end
 
   @doc """
@@ -153,6 +176,9 @@ defmodule Triplex do
 
   @doc """
   Returns if the given tenant is reserved or not.
+
+  If the given tenant is a map, it will apply `tenant_field/1` to it and get
+  the prefix from the field.
   """
   def reserved_tenant?(tenant) do
     Enum.any? reserved_tenants(), fn (i) ->
@@ -171,6 +197,9 @@ defmodule Triplex do
   structure executing all migrations from inside
   `priv/YOUR_REPO/tenant_migrations` folder.
 
+  If the given tenant is a map, it will apply `tenant_field/1` to it and get
+  the prefix from the field.
+
   If the repo is not given, it uses the one you configured.
   """
   def create(tenant, repo \\ config().repo) do
@@ -181,6 +210,9 @@ defmodule Triplex do
 
   @doc """
   Drops the given tenant on the given repo.
+
+  If the given tenant is a map, it will apply `tenant_field/1` to it and get
+  the prefix from the field.
 
   If the repo is not given, it uses the one you configured.
   """
@@ -199,6 +231,9 @@ defmodule Triplex do
 
   @doc """
   Renames the given tenant on the given repo.
+
+  If any given tenant is a map, it will apply `tenant_field/1` to it and get
+  the prefix from the field.
 
   If the repo is not given, it uses the one you configured.
   """
@@ -221,6 +256,9 @@ defmodule Triplex do
   @doc """
   Returns all the tenants on the given repo.
 
+  If the given tenant is a map, it will apply `tenant_field/1` to it and get
+  the prefix from the field.
+
   If the repo is not given, it uses the one you configured.
   """
   def all(repo \\ config().repo) do
@@ -237,6 +275,9 @@ defmodule Triplex do
 
   @doc """
   Returns if the tenant exists or not on the given repo.
+
+  If the given tenant is a map, it will apply `tenant_field/1` to it and get
+  the prefix from the field.
 
   If the repo is not given, it uses the one you configured.
   """
@@ -257,6 +298,9 @@ defmodule Triplex do
 
   @doc """
   Migrates the given tenant.
+
+  If the given tenant is a map, it will apply `tenant_field/1` to it and get
+  the prefix from the field.
 
   If the repo is not given, it uses the one you configured.
   """
@@ -290,6 +334,9 @@ defmodule Triplex do
   After creating it successfully, the given function callback is called with
   the tenant and the repo as arguments.
 
+  If the given tenant is a map, it will apply `tenant_field/1` to it and get
+  the prefix from the field.
+
   If the repo is not given, it uses the one you configured.
   """
   def create_schema(tenant, repo \\ config().repo, func \\ nil) do
@@ -310,7 +357,13 @@ defmodule Triplex do
   end
 
   @doc """
-  Returns the tenant name with the configured prefix.
+  Returns the tenant name with the given prefix.
+
+  If the prefix is omitted, the `tenant_prefix` configuration will be used.
+
+  The tenant can be a string, a map or a struct. For a string it will
+  be used as the tenant name to concat the prefix. For a map or a struct, it
+  will get the `tenant_field/0` from it to concat the prefix.
   """
   def to_prefix(tenant, prefix \\ config().tenant_prefix)
   def to_prefix(map, prefix) when is_map(map) do

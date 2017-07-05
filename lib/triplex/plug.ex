@@ -14,7 +14,8 @@ defmodule Triplex.Plug do
       conn
     else
       conn
-      |> assign(config.assign, tenant)
+      |> assign(config.tenant_assign, tenant)
+      |> assign(config.prefix_assign, Triplex.to_prefix(tenant))
       |> call_handler(tenant, config.handler)
     end
   end

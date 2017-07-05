@@ -1,7 +1,10 @@
 defmodule Triplex.PlugConfig do
   @moduledoc false
 
-  defstruct [:handler, param: "tenant", assign: :current_tenant]
+  defstruct [:handler,
+             param: "tenant",
+             tenant_assign: :current_tenant,
+             prefix_assign: :current_prefix]
 
   def new(opts \\ []),
     do: __MODULE__ |> struct(opts) |> normalize_param()

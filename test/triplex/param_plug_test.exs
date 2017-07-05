@@ -15,7 +15,7 @@ defmodule Triplex.ParamPlugTest do
     conn =
       :get
       |> conn("/", ten: "tchau")
-      |> ParamPlug.call(ParamPlug.init(param: :ten, assign: :tenant))
+      |> ParamPlug.call(ParamPlug.init(param: :ten, tenant_assign: :tenant))
     assert conn.assigns[:tenant] == "tchau"
 
     handler = fn(conn, _) -> assign(conn, :lala, "lolo") end

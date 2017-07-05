@@ -15,7 +15,7 @@ defmodule Triplex.PlugTest do
     conn =
       :get
       |> conn("/")
-      |> Plug.put_tenant("power", PlugConfig.new(assign: :tenant))
+      |> Plug.put_tenant("power", PlugConfig.new(tenant_assign: :tenant))
     assert conn.assigns[:tenant] == "power"
 
     handler = fn(_, _) -> "oi" end

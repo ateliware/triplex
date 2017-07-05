@@ -196,14 +196,10 @@ defmodule Triplex do
   structure executing all migrations from inside
   `priv/YOUR_REPO/tenant_migrations` folder.
 
-  The function `to_prefix/1` will be applied to the tenant.
-
   If the repo is not given, it uses the one you configured.
   """
   def create(tenant, repo \\ config().repo) do
-    tenant
-    |> to_prefix()
-    |> create_schema(repo, &(migrate(&1, &2)))
+    create_schema(tenant, repo, &(migrate(&1, &2)))
   end
 
   @doc """

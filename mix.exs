@@ -49,6 +49,7 @@ defmodule Triplex.Mixfile do
   defp deps do
     [
       {:ecto, "~> 2.1"},
+      {:plug, "~> 1.3.5"},
       {:postgrex, ">= 0.11.0"},
 
       {:ex_doc, ">= 0.0.0", only: :dev},

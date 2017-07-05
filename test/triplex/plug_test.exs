@@ -5,7 +5,7 @@ defmodule Triplex.PlugTest do
   alias Triplex.Plug
   alias Triplex.PlugConfig
 
-  test "put_tenant/2 must set the tenant to the given assign" do
+  test "put_tenant/3 must set the tenant to the given assign" do
     conn =
       :get
       |> conn("/")
@@ -24,13 +24,30 @@ defmodule Triplex.PlugTest do
       |> conn("/")
       |> Plug.put_tenant("power", PlugConfig.new(assign: :tenant))
     assert conn.assigns[:tenant] == "power"
+  end
 
-    callback = fn(_, _) -> "oi" end
+  test "ensure_tenant/3 ensure the tenant is loaded" do
+    callback = fn(conn, _) ->
+      assert conn.halted == true
+      "oi"
+    end
     result =
       :get
       |> conn("/")
-      |> Plug.put_tenant("power", PlugConfig.new(callback: callback))
+      |> Plug.ensure_tenant("power", PlugConfig.new(failure_callback: callback))
 
     assert result == "oi"
+
+    callback = fn(conn, _) ->
+      assert conn.halted == false
+      "tchau"
+    end
+    result =
+      :get
+      |> conn("/")
+      |> Plug.put_tenant("power", PlugConfig.new())
+      |> Plug.ensure_tenant("power", PlugConfig.new(callback: callback))
+
+    assert result == "tchau"
   end
 end

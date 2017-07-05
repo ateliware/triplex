@@ -33,6 +33,16 @@ defmodule Triplex.ParamPlugTest do
 
     assert conn.assigns[:current_tenant] == "lele"
     assert conn.assigns[:lala] == "lolo"
+
+    callback = fn(conn, _) -> assign(conn, :lele, "lili") end
+    conn =
+      :get
+      |> conn("/", lol: "")
+      |> ParamPlug.call(ParamPlug.init(failure_callback: callback))
+
+    assert conn.assigns[:current_tenant] == nil
+    assert conn.assigns[:lele] == "lili"
+    assert conn.halted == true
   end
 end
 

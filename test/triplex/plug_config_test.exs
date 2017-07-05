@@ -7,14 +7,18 @@ defmodule Triplex.PlugConfigTest do
     assert PlugConfig.new() ==
       %PlugConfig{
         callback: nil,
+        failure_callback: nil,
         tenant_handler: nil,
+        ensure: true,
         param: "tenant",
         assign: :current_tenant,
       }
-    assert PlugConfig.new(param: :oi, assign: :ho) ==
+    assert PlugConfig.new(ensure: false, param: :oi, assign: :ho) ==
       %PlugConfig{
         callback: nil,
+        failure_callback: nil,
         tenant_handler: nil,
+        ensure: false,
         param: "oi",
         assign: :ho,
       }

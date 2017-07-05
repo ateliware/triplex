@@ -4,7 +4,7 @@
   ],
   "coverage_options": {
     // TODO - get a bigger coverage here!
-    "minimum_coverage": 55,
+    "minimum_coverage": 60,
     "treat_no_relevant_lines_as_covered": true
   }
 }

@@ -11,7 +11,17 @@ defmodule Triplex.ParamPlug do
   def init(opts), do: PlugConfig.new(opts)
 
   @doc false
-  def call(conn, config),
-    do: put_tenant(conn, conn.params[config.param], config)
+  def call(conn, config) do
+    tenant = conn.params[config.param]
+
+    conn
+    |> put_tenant(tenant, config)
+    |> do_ensure_tenant(tenant, config)
+  end
+
+  defp do_ensure_tenant(conn, tenant, %{ensure: true} = config),
+    do: ensure_tenant(conn, tenant, config)
+  defp do_ensure_tenant(conn, _, _),
+    do: conn
 end
 

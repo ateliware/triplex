@@ -365,7 +365,7 @@ defmodule Triplex do
     |> to_prefix(prefix)
   end
   def to_prefix(tenant, nil), do: tenant
-  def to_prefix(tenant, prefix), do: prefix <> tenant
+  def to_prefix(tenant, prefix), do: "#{prefix}#{tenant}"
 
   @doc """
   Returns the value of the configured tenant field on the given map.

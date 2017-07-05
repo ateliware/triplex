@@ -29,8 +29,8 @@ defmodule Triplex.Plug do
       callback(conn, tenant, config.callback)
     else
       conn
-      |> halt()
       |> callback(tenant, config.failure_callback)
+      |> halt()
     end
   end
 

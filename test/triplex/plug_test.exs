@@ -1,6 +1,7 @@
 defmodule Triplex.PlugTest do
   use ExUnit.Case
 
+  import Plug.Conn
   import Plug.Test
   alias Triplex.Plug
   alias Triplex.PlugConfig
@@ -27,27 +28,23 @@ defmodule Triplex.PlugTest do
   end
 
   test "ensure_tenant/3 ensure the tenant is loaded" do
-    callback = fn(conn, _) ->
-      assert conn.halted == true
-      "oi"
-    end
-    result =
+    callback = fn(conn, _) -> assign(conn, :test, "blog") end
+    conn =
       :get
       |> conn("/")
       |> Plug.ensure_tenant("power", PlugConfig.new(failure_callback: callback))
 
-    assert result == "oi"
+    assert conn.assigns[:test] == "blog"
+    assert conn.halted == true
 
-    callback = fn(conn, _) ->
-      assert conn.halted == false
-      "tchau"
-    end
-    result =
+    callback = fn(conn, _) -> assign(conn, :test, "blag") end
+    conn =
       :get
       |> conn("/")
       |> Plug.put_tenant("power", PlugConfig.new())
       |> Plug.ensure_tenant("power", PlugConfig.new(callback: callback))
 
-    assert result == "tchau"
+    assert conn.assigns[:test] == "blag"
+    assert conn.halted == false
   end
 end

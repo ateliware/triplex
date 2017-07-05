@@ -11,19 +11,33 @@ defmodule Triplex.Plug do
   """
   def put_tenant(conn, tenant, config) do
     tenant = tenant_handler(tenant, config.tenant_handler)
-    if Triplex.reserved_tenant?(tenant) do
+
+    if Triplex.reserved_tenant?(tenant) || conn.assigns[config.assign] do
       conn
     else
+      assign(conn, config.assign, tenant)
+    end
+  end
+
+  @doc """
+  Ensure the tenant is loaded, and if not, halts the conn.
+  """
+  def ensure_tenant(conn, tenant, config) do
+    tenant = tenant_handler(tenant, config.tenant_handler)
+
+    if conn.assigns[config.assign] do
+      callback(conn, tenant, config.callback)
+    else
       conn
-      |> assign(config.assign, tenant)
-      |> callback(tenant, config.callback)
+      |> callback(tenant, config.failure_callback)
+      |> halt()
     end
   end
 
   defp tenant_handler(tenant, nil),
     do: tenant
-  defp tenant_handler(tenant, tenant_handler) when is_function(tenant_handler),
-    do: tenant_handler.(tenant)
+  defp tenant_handler(tenant, handler) when is_function(handler),
+    do: handler.(tenant)
 
   defp callback(conn, _, nil),
     do: conn

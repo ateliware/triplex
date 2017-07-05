@@ -2,7 +2,9 @@ defmodule Triplex.PlugConfig do
   @moduledoc false
 
   defstruct [:callback,
+             :failure_callback,
              :tenant_handler,
+             ensure: true,
              param: "tenant",
              assign: :current_tenant]
 

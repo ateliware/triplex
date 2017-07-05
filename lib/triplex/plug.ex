@@ -10,19 +10,24 @@ defmodule Triplex.Plug do
   tenant is not reserved.
   """
   def put_tenant(conn, tenant, config) do
+    tenant = tenant_handler(tenant, config.tenant_handler)
     if Triplex.reserved_tenant?(tenant) do
       conn
     else
       conn
-      |> assign(config.tenant_assign, tenant)
-      |> assign(config.prefix_assign, Triplex.to_prefix(tenant))
-      |> call_handler(tenant, config.handler)
+      |> assign(config.assign, tenant)
+      |> callback(tenant, config.callback)
     end
   end
 
-  defp call_handler(conn, _, nil),
+  defp tenant_handler(tenant, nil),
+    do: tenant
+  defp tenant_handler(tenant, tenant_handler) when is_function(tenant_handler),
+    do: tenant_handler.(tenant)
+
+  defp callback(conn, _, nil),
     do: conn
-  defp call_handler(conn, tenant, handler) when is_function(handler),
-    do: handler.(conn, tenant)
+  defp callback(conn, tenant, callback) when is_function(callback),
+    do: callback.(conn, tenant)
 end
 

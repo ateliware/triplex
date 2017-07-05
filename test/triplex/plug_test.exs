@@ -12,17 +12,24 @@ defmodule Triplex.PlugTest do
       |> Plug.put_tenant("power", PlugConfig.new())
     assert conn.assigns[:current_tenant] == "power"
 
+    handler = fn("oi") -> "olá" end
     conn =
       :get
       |> conn("/")
-      |> Plug.put_tenant("power", PlugConfig.new(tenant_assign: :tenant))
+      |> Plug.put_tenant("oi", PlugConfig.new(tenant_handler: handler))
+    assert conn.assigns[:current_tenant] == "olá"
+
+    conn =
+      :get
+      |> conn("/")
+      |> Plug.put_tenant("power", PlugConfig.new(assign: :tenant))
     assert conn.assigns[:tenant] == "power"
 
-    handler = fn(_, _) -> "oi" end
+    callback = fn(_, _) -> "oi" end
     result =
       :get
       |> conn("/")
-      |> Plug.put_tenant("power", PlugConfig.new(handler: handler))
+      |> Plug.put_tenant("power", PlugConfig.new(callback: callback))
 
     assert result == "oi"
   end

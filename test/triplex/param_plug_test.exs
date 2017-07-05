@@ -12,17 +12,24 @@ defmodule Triplex.ParamPlugTest do
       |> ParamPlug.call(ParamPlug.init([]))
     assert conn.assigns[:current_tenant] == "oi"
 
+    handler = fn("oi") -> "olá" end
+    conn =
+      :get
+      |> conn("/", tenant: "oi")
+      |> ParamPlug.call(ParamPlug.init(tenant_handler: handler))
+    assert conn.assigns[:current_tenant] == "olá"
+
     conn =
       :get
       |> conn("/", ten: "tchau")
-      |> ParamPlug.call(ParamPlug.init(param: :ten, tenant_assign: :tenant))
+      |> ParamPlug.call(ParamPlug.init(param: :ten, assign: :tenant))
     assert conn.assigns[:tenant] == "tchau"
 
-    handler = fn(conn, _) -> assign(conn, :lala, "lolo") end
+    callback = fn(conn, _) -> assign(conn, :lala, "lolo") end
     conn =
       :get
       |> conn("/", tenant: "lele")
-      |> ParamPlug.call(ParamPlug.init(handler: handler))
+      |> ParamPlug.call(ParamPlug.init(callback: callback))
 
     assert conn.assigns[:current_tenant] == "lele"
     assert conn.assigns[:lala] == "lolo"

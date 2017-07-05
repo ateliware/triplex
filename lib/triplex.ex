@@ -177,8 +177,7 @@ defmodule Triplex do
   @doc """
   Returns if the given tenant is reserved or not.
 
-  If the given tenant is a map, it will apply `tenant_field/1` to it and get
-  the prefix from the field.
+  The function `to_prefix/1` will be applied to the tenant.
   """
   def reserved_tenant?(tenant) do
     Enum.any? reserved_tenants(), fn (i) ->
@@ -197,8 +196,7 @@ defmodule Triplex do
   structure executing all migrations from inside
   `priv/YOUR_REPO/tenant_migrations` folder.
 
-  If the given tenant is a map, it will apply `tenant_field/1` to it and get
-  the prefix from the field.
+  The function `to_prefix/1` will be applied to the tenant.
 
   If the repo is not given, it uses the one you configured.
   """
@@ -211,8 +209,7 @@ defmodule Triplex do
   @doc """
   Drops the given tenant on the given repo.
 
-  If the given tenant is a map, it will apply `tenant_field/1` to it and get
-  the prefix from the field.
+  The function `to_prefix/1` will be applied to the tenant.
 
   If the repo is not given, it uses the one you configured.
   """
@@ -256,8 +253,7 @@ defmodule Triplex do
   @doc """
   Returns all the tenants on the given repo.
 
-  If the given tenant is a map, it will apply `tenant_field/1` to it and get
-  the prefix from the field.
+  The function `to_prefix/1` will be applied to the tenant.
 
   If the repo is not given, it uses the one you configured.
   """
@@ -276,8 +272,7 @@ defmodule Triplex do
   @doc """
   Returns if the tenant exists or not on the given repo.
 
-  If the given tenant is a map, it will apply `tenant_field/1` to it and get
-  the prefix from the field.
+  The function `to_prefix/1` will be applied to the tenant.
 
   If the repo is not given, it uses the one you configured.
   """
@@ -299,8 +294,7 @@ defmodule Triplex do
   @doc """
   Migrates the given tenant.
 
-  If the given tenant is a map, it will apply `tenant_field/1` to it and get
-  the prefix from the field.
+  The function `to_prefix/1` will be applied to the tenant.
 
   If the repo is not given, it uses the one you configured.
   """
@@ -334,8 +328,7 @@ defmodule Triplex do
   After creating it successfully, the given function callback is called with
   the tenant and the repo as arguments.
 
-  If the given tenant is a map, it will apply `tenant_field/1` to it and get
-  the prefix from the field.
+  The function `to_prefix/1` will be applied to the tenant.
 
   If the repo is not given, it uses the one you configured.
   """

@@ -13,7 +13,7 @@ The package can be installed as:
 
 ```elixir
 def deps do
-  [{:triplex, "~> 0.5.1"}]
+  [{:triplex, "~> 0.6.0"}]
 end
 ```
 

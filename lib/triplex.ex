@@ -179,6 +179,11 @@ defmodule Triplex do
 
   The function `to_prefix/1` will be applied to the tenant.
   """
+  def reserved_tenant?(map) when is_map(map) do
+    map
+    |> tenant_field()
+    |> reserved_tenant?()
+  end
   def reserved_tenant?(tenant) do
     do_reserved_tenant?(tenant) or
       tenant

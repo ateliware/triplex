@@ -9,7 +9,7 @@ defmodule Triplex.Plug do
   Puts the given tenant as an assign on the given conn, but only if the
   tenant is not reserved.
 
-  See `Triplex.PlugConfig` to the allowed configuration.
+  See `Triplex.PlugConfig` to the allowed configuration flags.
   """
   def put_tenant(conn, tenant, config) do
     tenant = tenant_handler(tenant, config.tenant_handler)
@@ -24,7 +24,7 @@ defmodule Triplex.Plug do
   @doc """
   Ensure the tenant is loaded, and if not, halts the conn.
 
-  See `Triplex.PlugConfig` to the allowed configuration.
+  See `Triplex.PlugConfig` to the allowed configuration flags.
   """
   def ensure_tenant(conn, tenant, config) do
     tenant = tenant_handler(tenant, config.tenant_handler)

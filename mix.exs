@@ -4,7 +4,7 @@ defmodule Triplex.Mixfile do
   def project do
     [
       app: :triplex,
-      version: "0.6.2",
+      version: "0.6.3",
       elixir: "~> 1.4",
 
       description: description(),

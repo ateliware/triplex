@@ -192,7 +192,7 @@ defmodule Triplex do
   end
   defp do_reserved_tenant?(prefix) do
     Enum.any? reserved_tenants(), fn (i) ->
-      if Regex.regex?(i) and is_bitstring(prefix) do
+      if is_bitstring(prefix) and Regex.regex?(i) do
         Regex.match?(i, prefix)
       else
         i == prefix

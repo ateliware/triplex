@@ -180,11 +180,17 @@ defmodule Triplex do
   The function `to_prefix/1` will be applied to the tenant.
   """
   def reserved_tenant?(tenant) do
+    do_reserved_tenant?(tenant) or
+      tenant
+      |> to_prefix()
+      |> do_reserved_tenant?()
+  end
+  defp do_reserved_tenant?(prefix) do
     Enum.any? reserved_tenants(), fn (i) ->
       if Regex.regex?(i) do
-        Regex.match?(i, to_prefix(tenant))
+        Regex.match?(i, prefix)
       else
-        i == tenant
+        i == prefix
       end
     end
   end

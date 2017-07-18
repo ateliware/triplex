@@ -17,13 +17,17 @@ defmodule Triplex.PlugConfig do
   PS.: remember, the value saved when you have a `tenant_handler` configured is its return.
   """
 
-  defstruct [:callback,
-             :failure_callback,
-             :tenant_handler,
-             ensure: true,
-             param: "tenant",
-             session: :tenant,
-             assign: :current_tenant]
+  defstruct [
+    :callback,
+    :endpoint,
+    :failure_callback,
+    :tenant_handler,
+
+    assign: :current_tenant,
+    ensure: true,
+    param: "tenant",
+    session: :tenant
+  ]
 
   def new(opts \\ []),
     do: __MODULE__ |> struct(opts) |> normalize_param()

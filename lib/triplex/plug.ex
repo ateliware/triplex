@@ -4,6 +4,7 @@ defmodule Triplex.Plug do
   """
 
   import Plug.Conn
+  alias Triplex.PlugConfig
 
   @doc """
   Puts the given tenant as an assign on the given conn, but only if the
@@ -26,7 +27,7 @@ defmodule Triplex.Plug do
 
   See `Triplex.PlugConfig` to the allowed configuration flags.
   """
-  def ensure_tenant(conn, tenant, config) do
+  def ensure_tenant(conn, tenant, %PlugConfig{ensure: true} = config) do
     tenant = tenant_handler(tenant, config.tenant_handler)
 
     if conn.assigns[config.assign] do
@@ -36,6 +37,9 @@ defmodule Triplex.Plug do
       |> callback(tenant, config.failure_callback)
       |> halt()
     end
+  end
+  def ensure_tenant(conn, _, _) do
+    conn
   end
 
   defp tenant_handler(tenant, nil),

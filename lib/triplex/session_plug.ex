@@ -27,12 +27,7 @@ defmodule Triplex.SessionPlug do
 
     conn
     |> put_tenant(tenant, config)
-    |> do_ensure_tenant(tenant, config)
+    |> ensure_tenant(tenant, config)
   end
-
-  defp do_ensure_tenant(conn, tenant, %{ensure: true} = config),
-    do: ensure_tenant(conn, tenant, config)
-  defp do_ensure_tenant(conn, _, _),
-    do: conn
 end
 

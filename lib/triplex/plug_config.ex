@@ -22,6 +22,7 @@ defmodule Triplex.PlugConfig do
              :tenant_handler,
              ensure: true,
              param: "tenant",
+             session: :tenant,
              assign: :current_tenant]
 
   def new(opts \\ []),

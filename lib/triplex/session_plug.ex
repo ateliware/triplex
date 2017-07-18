@@ -27,7 +27,7 @@ defmodule Triplex.SessionPlug do
 
     conn
     |> put_tenant(tenant, config)
-    |> ensure_tenant(tenant, config)
+    |> ensure_tenant(config)
   end
 end
 

@@ -27,7 +27,7 @@ defmodule Triplex.SubdomainPlug do
 
     conn
     |> put_tenant(tenant, config)
-    |> ensure_tenant(tenant, config)
+    |> ensure_tenant(config)
   end
 
   defp get_subdomain(_conn, %PlugConfig{endpoint: nil}) do

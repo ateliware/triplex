@@ -6,6 +6,8 @@ defmodule Triplex.Plug do
   import Plug.Conn
   alias Triplex.PlugConfig
 
+  @raw_tenant_assign :raw_current_tenant
+
   @doc """
   Puts the given tenant as an assign on the given conn, but only if the
   tenant is not reserved.
@@ -13,12 +15,16 @@ defmodule Triplex.Plug do
   See `Triplex.PlugConfig` to the allowed configuration flags.
   """
   def put_tenant(conn, tenant, config) do
-    tenant = tenant_handler(tenant, config.tenant_handler)
-
-    if Triplex.reserved_tenant?(tenant) || conn.assigns[config.assign] do
+    if conn.assigns[config.assign] do
       conn
     else
-      assign(conn, config.assign, tenant)
+      conn = assign(conn, @raw_tenant_assign, tenant)
+      tenant = tenant_handler(tenant, config.tenant_handler)
+      if Triplex.reserved_tenant?(tenant) do
+        conn
+      else
+        assign(conn, config.assign, tenant)
+      end
     end
   end
 
@@ -27,18 +33,16 @@ defmodule Triplex.Plug do
 
   See `Triplex.PlugConfig` to the allowed configuration flags.
   """
-  def ensure_tenant(conn, tenant, %PlugConfig{ensure: true} = config) do
-    tenant = tenant_handler(tenant, config.tenant_handler)
-
-    if conn.assigns[config.assign] do
-      callback(conn, tenant, config.callback)
+  def ensure_tenant(conn, %PlugConfig{ensure: true} = config) do
+    if loaded_tenant = conn.assigns[config.assign] do
+      callback(conn, loaded_tenant, config.callback)
     else
       conn
-      |> callback(tenant, config.failure_callback)
+      |> callback(conn.assigns[@raw_tenant_assign], config.failure_callback)
       |> halt()
     end
   end
-  def ensure_tenant(conn, _, _) do
+  def ensure_tenant(conn, _) do
     conn
   end
 

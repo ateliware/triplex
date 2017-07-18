@@ -29,28 +29,5 @@ defmodule Triplex.ParamPlugTest do
       |> ParamPlug.call(ParamPlug.init(param: :ten, assign: :tenant))
     assert conn.assigns[:tenant] == "tchau"
   end
-
-  test "call/2 must call callback on success" do
-    callback = fn(conn, _) -> assign(conn, :lala, "lolo") end
-    conn =
-      :get
-      |> conn("/", tenant: "lele")
-      |> ParamPlug.call(ParamPlug.init(callback: callback))
-
-    assert conn.assigns[:current_tenant] == "lele"
-    assert conn.assigns[:lala] == "lolo"
-  end
-
-  test "call/2 must call failure callback on fail" do
-    callback = fn(conn, _) -> assign(conn, :lele, "lili") end
-    conn =
-      :get
-      |> conn("/", lol: "")
-      |> ParamPlug.call(ParamPlug.init(failure_callback: callback))
-
-    assert conn.assigns[:current_tenant] == nil
-    assert conn.assigns[:lele] == "lili"
-    assert conn.halted == true
-  end
 end
 

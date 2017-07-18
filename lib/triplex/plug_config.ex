@@ -4,17 +4,31 @@ defmodule Triplex.PlugConfig do
 
   Here are the config keys we have:
 
+  ## For all plugs
+
+  - `tenant_handler`: function to handle te test param. The return of it will
+  be used as the tenant.
+  - `assign`: the name of the assign where we must save the tenant.
+
+  ## For `Triplex.EnsurePlug`
+
   - `callback`: function that might be called when the plug succeeded. It
   must return a connection.
   - `failure_callback`: function that might be called when the plug failed.
   It must return a connection.
-  - `tenant_handler`: function to handle te test param. The return of it will
-  be used as the tenant.
-  - `ensure`: flag that signs if we must ensure the tenant is loaded, and
-  halt if it's not.
+
+  ## For `Triplex.ParamPlug`
+
   - `param`: the param name to load the tenant from.
-  - `assign`: the name of the assign where we must save the tenant.
-  PS.: remember, the value saved when you have a `tenant_handler` configured is its return.
+
+  ## For `Triplex.SessionPlug`
+
+  - `session`: the session param name to load the tenant from.
+
+  ## For `Triplex.SubdomainPlug`
+
+  - `endpoint`: the Phoenix.Endpoint to get the host name to dicover the
+  subdomain.
   """
 
   defstruct [
@@ -24,7 +38,6 @@ defmodule Triplex.PlugConfig do
     :tenant_handler,
 
     assign: :current_tenant,
-    ensure: true,
     param: "tenant",
     session: :tenant
   ]

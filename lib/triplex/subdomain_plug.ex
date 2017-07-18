@@ -7,9 +7,7 @@ defmodule Triplex.SubdomainPlug do
 
       plug Triplex.SubdomainPlug,
         endpoint: MyApp.Endpoint,
-        tenant_handler: &TenantHelper.tenant_handler/1,
-        callback: &TenantHelper.callback/2
-        failure_callback: &TenantHelper.failure_callback/2
+        tenant_handler: &TenantHelper.tenant_handler/1
 
   See `Triplex.PlugConfig` to check all the allowed configuration flags.
   """
@@ -22,13 +20,8 @@ defmodule Triplex.SubdomainPlug do
   def init(opts), do: PlugConfig.new(opts)
 
   @doc false
-  def call(conn, config) do
-    tenant = get_subdomain(conn, config)
-
-    conn
-    |> put_tenant(tenant, config)
-    |> ensure_tenant(config)
-  end
+  def call(conn, config),
+    do: put_tenant(conn, get_subdomain(conn, config), config)
 
   defp get_subdomain(_conn, %PlugConfig{endpoint: nil}) do
     nil

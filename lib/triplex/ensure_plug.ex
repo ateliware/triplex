@@ -18,8 +18,6 @@ defmodule Triplex.EnsurePlug do
   def init(opts), do: PlugConfig.new(opts)
 
   @doc false
-  def call(conn, config) do
-    ensure_tenant(conn, config)
-  end
+  def call(conn, config), do: ensure_tenant(conn, config)
 end
 

@@ -9,19 +9,17 @@ defmodule Triplex.PlugConfigTest do
         callback: nil,
         failure_callback: nil,
         tenant_handler: nil,
-        ensure: true,
         param: "tenant",
         assign: :current_tenant,
       }
   end
 
   test "new/1 returns a new config and normalize the param" do
-    assert PlugConfig.new(ensure: false, param: :oi, assign: :ho) ==
+    assert PlugConfig.new(param: :oi, assign: :ho) ==
       %PlugConfig{
         callback: nil,
         failure_callback: nil,
         tenant_handler: nil,
-        ensure: false,
         param: "oi",
         assign: :ho,
       }

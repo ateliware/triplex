@@ -7,9 +7,7 @@ defmodule Triplex.ParamPlug do
 
       plug Triplex.ParamPlug,
         param: :subdomain,
-        tenant_handler: &TenantHelper.tenant_handler/1,
-        callback: &TenantHelper.callback/2
-        failure_callback: &TenantHelper.failure_callback/2
+        tenant_handler: &TenantHelper.tenant_handler/1
 
   See `Triplex.PlugConfig` to check all the allowed configuration flags.
   """
@@ -21,12 +19,7 @@ defmodule Triplex.ParamPlug do
   def init(opts), do: PlugConfig.new(opts)
 
   @doc false
-  def call(conn, config) do
-    tenant = conn.params[config.param]
-
-    conn
-    |> put_tenant(tenant, config)
-    |> ensure_tenant(config)
-  end
+  def call(conn, config),
+    do: put_tenant(conn, conn.params[config.param], config)
 end
 

@@ -4,7 +4,6 @@ defmodule Triplex.Plug do
   """
 
   import Plug.Conn
-  alias Triplex.PlugConfig
 
   @raw_tenant_assign :raw_current_tenant
 
@@ -33,7 +32,7 @@ defmodule Triplex.Plug do
 
   See `Triplex.PlugConfig` to the allowed configuration flags.
   """
-  def ensure_tenant(conn, %PlugConfig{ensure: true} = config) do
+  def ensure_tenant(conn, config) do
     if loaded_tenant = conn.assigns[config.assign] do
       callback(conn, loaded_tenant, config.callback)
     else
@@ -41,9 +40,6 @@ defmodule Triplex.Plug do
       |> callback(conn.assigns[@raw_tenant_assign], config.failure_callback)
       |> halt()
     end
-  end
-  def ensure_tenant(conn, _) do
-    conn
   end
 
   defp tenant_handler(tenant, nil),

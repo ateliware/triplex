@@ -5,26 +5,32 @@ defmodule Triplex.ParamPlugTest do
   import Plug.Conn
   alias Triplex.ParamPlug
 
-  test "put_tenant/2 must set the tenant to the given assign" do
+  test "call/2 must set the tenant to assign" do
     conn =
       :get
       |> conn("/", tenant: "oi")
       |> ParamPlug.call(ParamPlug.init([]))
     assert conn.assigns[:current_tenant] == "oi"
+  end
 
+  test "call/2 must call the tenant handler to the a good tenant" do
     handler = fn("oi") -> "olá" end
     conn =
       :get
       |> conn("/", tenant: "oi")
       |> ParamPlug.call(ParamPlug.init(tenant_handler: handler))
     assert conn.assigns[:current_tenant] == "olá"
+  end
 
+  test "call/2 must read from the given param and write in the given assign" do
     conn =
       :get
       |> conn("/", ten: "tchau")
       |> ParamPlug.call(ParamPlug.init(param: :ten, assign: :tenant))
     assert conn.assigns[:tenant] == "tchau"
+  end
 
+  test "call/2 must call callback on success" do
     callback = fn(conn, _) -> assign(conn, :lala, "lolo") end
     conn =
       :get
@@ -33,7 +39,9 @@ defmodule Triplex.ParamPlugTest do
 
     assert conn.assigns[:current_tenant] == "lele"
     assert conn.assigns[:lala] == "lolo"
+  end
 
+  test "call/2 must call failure callback on fail" do
     callback = fn(conn, _) -> assign(conn, :lele, "lili") end
     conn =
       :get

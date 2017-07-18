@@ -1,13 +1,10 @@
-defmodule Triplex.ParamPlug do
+defmodule Triplex.EnsurePlug do
   @moduledoc """
-  This is a basic plug that loads the current tenant assign from a given
-  param.
+  This is a basic plug that ensure the tenant is loaded.
 
   To plug it on your router, you can use:
 
-      plug Triplex.ParamPlug,
-        param: :subdomain,
-        tenant_handler: &TenantHelper.tenant_handler/1,
+      plug Triplex.EnsurePlug,
         callback: &TenantHelper.callback/2
         failure_callback: &TenantHelper.failure_callback/2
 
@@ -22,11 +19,7 @@ defmodule Triplex.ParamPlug do
 
   @doc false
   def call(conn, config) do
-    tenant = conn.params[config.param]
-
-    conn
-    |> put_tenant(tenant, config)
-    |> ensure_tenant(config)
+    ensure_tenant(conn, config)
   end
 end
 

@@ -3,7 +3,7 @@ defmodule Triplex.PlugConfigTest do
 
   alias Triplex.PlugConfig
 
-  test "new/1 returns a new config and normalize the param" do
+  test "new/0 returns a new config with default values set" do
     assert PlugConfig.new() ==
       %PlugConfig{
         callback: nil,
@@ -13,6 +13,9 @@ defmodule Triplex.PlugConfigTest do
         param: "tenant",
         assign: :current_tenant,
       }
+  end
+
+  test "new/1 returns a new config and normalize the param" do
     assert PlugConfig.new(ensure: false, param: :oi, assign: :ho) ==
       %PlugConfig{
         callback: nil,

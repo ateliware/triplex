@@ -76,7 +76,7 @@ defmodule Triplex.Mixfile do
   defp description do
     """
     An https://github.com/influitive/apartment for succesfull Phoenix
-		programmers.
+    programmers.
     """
   end
 

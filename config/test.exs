@@ -1,13 +1,10 @@
 use Mix.Config
 
 # Configure triplex
-# TODO - I had to rip it off from here, because of umbrella project
-# configuration, check if is there a way not to conflict these configurations,
-# once this becomes a external lib, we can put this code back
-# config :triplex,
-#   reserved_tenants: [
-#     "www", "api", "admin", "security", "app", "staging", ~r/^db\d+$/
-#   ]
+config :triplex,
+  reserved_tenants: [
+    "www", "api", "admin", "security", "app", "staging", ~r/^db\d+$/
+  ]
 
 # Configure your database
 config :triplex, ecto_repos: [Triplex.TestRepo]

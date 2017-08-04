@@ -26,37 +26,20 @@ end
 mix deps.get
 ```
 
-## Configuring
+## Configuration
 
 All you need to do in your project to start using it is to configure the Repo
 you will use to execute the database commands with:
 
     config :triplex, repo: ExampleApp.Repo
 
-## Creating tables and schemas
+## Usage
 
-To create a table inside your tenant you can use:
+Here is a quick overview of what you can do with triplex!
 
-```bash
-mix triplex.gen.migration
-```
+### Creating, renaming and droping tenants
 
-Also, you can move a normally generated migration to the
-`priv/YOUR_REPO/tenant_migrations` folder.
-
-The schemas look the same way, nothing to change.
-
-To run the tenant migrations, just run:
-
-```bash
-mix triplex.migrate
-```
-
-This task will migrate all your existent tenants, one by one.
-
-## Managing your tenants
-
-To create a tenant:
+To create a new tenant:
 
 ```elixir
 Triplex.create("your_tenant")
@@ -80,15 +63,40 @@ And if you're sick of it and want to drop:
 Triplex.drop("my_tenant")
 ```
 
-## Using the tenant
+### Creating tables inside tenant
 
-To use your tenant is quite easy. Just send a `prefix` opt on your repo call
-with your current tenant name. Like this:
+To create a table inside your tenant you can use:
+
+```bash
+mix triplex.gen.migration your_migration_name
+```
+
+Also, you can move a normally generated migrations from inside
+`priv/YOUR_REPO/migrations` to the `priv/YOUR_REPO/tenant_migrations`
+folder.
+
+The schemas look the same way, nothing to change.
+
+To run the tenant migrations, just run:
+
+```bash
+mix triplex.migrate
+```
+
+This task will migrate all your existent tenants, one by one. If it
+fail in any tenant, the next time you run it will continue from where
+it stoped.
+
+### Querying, updating and inserting data inside tenants
+
+To make queries, updates and inserts inside your tenant is quite easy.
+Just send a `prefix` opt on your repo call with your current tenant name.
+Like this:
 
 ```elixir
 Repo.all(User, prefix: Triplex.to_prefix("my_tenant"))
 ```
 
-It's a good idea to call `Triplex.to_prefix` on your tenant name, altough is
+It's a good idea to call `Triplex.to_prefix/1` on your tenant name, altough is
 not required. Because, if you configured a `tenant_prefix`, this function will
 return the prefixed one.

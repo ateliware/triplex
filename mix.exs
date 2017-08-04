@@ -90,6 +90,7 @@ defmodule Triplex.Mixfile do
 
   defp preferred_cli_env do
     ["coveralls": :test,
+     "coveralls.travis": :test,
      "coveralls.detail": :test,
      "coveralls.post": :test,
      "coveralls.html": :test,

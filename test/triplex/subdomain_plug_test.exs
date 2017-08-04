@@ -2,7 +2,6 @@ defmodule Triplex.SubdomainPlugTest do
   use ExUnit.Case
 
   import Plug.Test
-  import Plug.Conn
   alias Triplex.SubdomainPlug
   alias Triplex.FakeEndpoint
 

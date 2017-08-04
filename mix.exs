@@ -4,7 +4,7 @@ defmodule Triplex.Mixfile do
   def project do
     [
       app: :triplex,
-      version: "0.9.0",
+      version: "1.0.0",
       elixir: "~> 1.4",
 
       description: description(),
@@ -53,7 +53,9 @@ defmodule Triplex.Mixfile do
       {:postgrex, ">= 0.11.0"},
 
       {:ex_doc, ">= 0.0.0", only: :dev},
-      {:excoveralls, "~> 0.6", only: :test}
+
+      {:excoveralls, "~> 0.6", only: :test},
+      {:inch_ex, only: :test},
     ]
   end
 
@@ -90,6 +92,7 @@ defmodule Triplex.Mixfile do
 
   defp preferred_cli_env do
     ["coveralls": :test,
+     "coveralls.travis": :test,
      "coveralls.detail": :test,
      "coveralls.post": :test,
      "coveralls.html": :test,

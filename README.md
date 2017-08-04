@@ -1,6 +1,9 @@
 # Triplex
 
 [![Build Status](https://travis-ci.org/ateliware/triplex.svg?branch=master)](https://travis-ci.org/ateliware/triplex)
+[![Hex pm](http://img.shields.io/hexpm/v/triplex.svg?style=flat)](https://hex.pm/packages/triplex)
+[![Inline docs](http://inch-ci.org/github/ateliware/triplex.svg?branch=master&style=flat)](http://inch-ci.org/github/ateliware/triplex)
+[![Coverage Status](https://coveralls.io/repos/github/ateliware/triplex/badge.svg)](https://coveralls.io/github/ateliware/triplex)
 
 An [apartment](https://github.com/influitive/apartment) for succesfull Phoenix
 programmers.
@@ -13,7 +16,7 @@ The package can be installed as:
 
 ```elixir
 def deps do
-  [{:triplex, "~> 0.9.0"}]
+  [{:triplex, "~> 1.0.0"}]
 end
 ```
 

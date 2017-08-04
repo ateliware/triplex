@@ -2,7 +2,6 @@ defmodule Triplex.ParamPlugTest do
   use ExUnit.Case
 
   import Plug.Test
-  import Plug.Conn
   alias Triplex.ParamPlug
 
   test "call/2 must set the tenant to assign" do

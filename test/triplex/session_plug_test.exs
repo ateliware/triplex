@@ -2,7 +2,6 @@ defmodule Triplex.SessionPlugTest do
   use ExUnit.Case
 
   import Plug.Test
-  import Plug.Conn
   alias Triplex.SessionPlug
 
   test "call/2 must set the tenant to the default assign" do

@@ -3,9 +3,6 @@ defmodule TriplexTest do
 
   import Mix.Ecto, only: [build_repo_priv: 1]
 
-  require Ecto.Query
-
-  alias Ecto.Query
   alias Triplex.Note
   alias Triplex.TestRepo
 
@@ -17,28 +14,6 @@ defmodule TriplexTest do
     Ecto.Adapters.SQL.Sandbox.mode(@repo, :manual)
 
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(@repo)
-  end
-
-  test "with_tenant/2 must execute the given function in the given tenant" do
-    Triplex.put_current_tenant("oi")
-    assert Triplex.current_tenant() == "oi"
-
-    Triplex.with_tenant "io", fn ->
-      assert Triplex.current_tenant() == "io"
-    end
-    assert Triplex.current_tenant() == "oi"
-  end
-
-  test "put_current_tenant/2 must save the current tenant" do
-    Triplex.put_current_tenant("io")
-    assert Triplex.current_tenant() == "io"
-
-    Triplex.put_current_tenant(nil)
-    assert Triplex.current_tenant() == nil
-
-    assert_raise ArgumentError, fn ->
-      Triplex.put_current_tenant(10)
-    end
   end
 
   test "create/2 must create a new tenant" do
@@ -112,82 +87,6 @@ defmodule TriplexTest do
       assert status == :error
       assert error_message == expected_postgres_error
     end
-  end
-
-  test "put_tenant/2 must add the prefix to the given resource recursively" do
-    cs = Note.changeset(%Note{}, %{body: "test"})
-    assert Ecto.get_meta(cs.data, :prefix) == nil
-    assert cs
-           |> Triplex.put_tenant(nil)
-           |> Map.fetch!(:data)
-           |> Ecto.get_meta(:prefix) == nil
-    assert cs
-           |> Triplex.put_tenant("trilegau")
-           |> Map.fetch!(:data)
-           |> Ecto.get_meta(:prefix) == "trilegau"
-
-    cs = Note.changeset(%Note{}, %{body: "test", parent: %{body: "parent"}})
-    assert Ecto.get_meta(cs.data, :prefix) == nil
-    tenanted_cs = Triplex.put_tenant(cs, "trilegau")
-    assert tenanted_cs
-           |> Map.fetch!(:data)
-           |> Ecto.get_meta(:prefix) == "trilegau"
-    assert tenanted_cs
-           |> Map.fetch!(:changes)
-           |> Map.fetch!(:parent)
-           |> Map.fetch!(:data)
-           |> Ecto.get_meta(:prefix) == "trilegau"
-
-    cs = Note.changeset(%Note{},
-                        %{body: "test",
-                          children: [%{body: "child1"}, %{body: "child2"}]})
-    assert Ecto.get_meta(cs.data, :prefix) == nil
-    tenanted_cs = Triplex.put_tenant(cs, "trilegau")
-    assert tenanted_cs
-           |> Map.fetch!(:data)
-           |> Ecto.get_meta(:prefix) == "trilegau"
-    tenanted_cs
-    |> Map.fetch!(:changes)
-    |> Map.fetch!(:children)
-    |> Enum.map(fn(child) ->
-      assert child
-             |> Map.fetch!(:data)
-             |> Ecto.get_meta(:prefix) == "trilegau"
-    end)
-
-    note = %Note{}
-    assert Ecto.get_meta(note, :prefix) == nil
-    assert note
-           |> Triplex.put_tenant("trilegau")
-           |> Ecto.get_meta(:prefix) == "trilegau"
-
-    note = %Note{parent: %Note{}}
-    assert Ecto.get_meta(note, :prefix) == nil
-    assert note
-           |> Triplex.put_tenant("trilegau")
-           |> Map.fetch!(:parent)
-           |> Ecto.get_meta(:prefix) == "trilegau"
-
-    note = %Note{children: [%Note{}, %Note{}]}
-    assert Ecto.get_meta(note, :prefix) == nil
-    tenanted_note = Triplex.put_tenant(note, "trilegau")
-    assert Ecto.get_meta(tenanted_note, :prefix) == "trilegau"
-    tenanted_note
-    |> Map.fetch!(:children)
-    |> Enum.map(fn(child) ->
-      assert Ecto.get_meta(child, :prefix) == "trilegau"
-    end)
-
-    query = Query.from(n in Note, select: n.id)
-    assert Map.get(query, :prefix) == nil
-    assert query
-           |> Triplex.put_tenant("trilegau")
-           |> Map.get(:prefix) == "trilegau"
-    assert query
-           |> Triplex.put_tenant(%{id: "tri"})
-           |> Map.get(:prefix) == "tri"
-
-    assert Triplex.put_tenant(%{}, "lala") == %{}
   end
 
   test "to_prefix/2 must apply the given prefix to the tenant name" do

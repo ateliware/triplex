@@ -54,9 +54,8 @@ defmodule Triplex.Mixfile do
 
       {:ex_doc, ">= 0.0.0", only: :dev},
 
-      {:inch_ex, only: :docs},
-
       {:excoveralls, "~> 0.6", only: :test},
+      {:inch_ex, only: :test},
     ]
   end
 

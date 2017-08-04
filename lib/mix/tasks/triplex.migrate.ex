@@ -4,6 +4,9 @@ defmodule Mix.Tasks.Triplex.Migrate do
   import Mix.Ecto
   import Mix.Triplex
 
+  alias Ecto.Adapters.SQL.Sandbox
+  alias Ecto.Migrator
+
   @shortdoc "Runs the repository tenant migrations"
   @recursive true
 
@@ -54,7 +57,7 @@ defmodule Mix.Tasks.Triplex.Migrate do
   """
 
   @doc false
-  def run(args, migrator \\ &Ecto.Migrator.run/4) do
+  def run(args, migrator \\ &Migrator.run/4) do
     repos = parse_repo(args)
 
     {opts, _, _} = OptionParser.parse args,
@@ -80,10 +83,8 @@ defmodule Mix.Tasks.Triplex.Migrate do
       # If the pool is Ecto.Adapters.SQL.Sandbox,
       # let's make sure we get a connection outside of a sandbox.
       if sandbox?(repo) do
-        Ecto.Adapters.SQL.Sandbox.checkin(repo)
-        Ecto.Adapters.SQL.Sandbox.checkout(repo,
-                                           sandbox: false,
-                                           ownership_timeout: :infinity)
+        Sandbox.checkin(repo)
+        Sandbox.checkout(repo, sandbox: false, ownership_timeout: :infinity)
       end
 
       Code.compiler_options(ignore_module_conflict: true)
@@ -104,11 +105,11 @@ defmodule Mix.Tasks.Triplex.Migrate do
     [try do
        migrator.(repo, Triplex.migrations_path(repo), :up, opts)
     after
-      sandbox?(repo) && Ecto.Adapters.SQL.Sandbox.checkin(repo)
+      sandbox?(repo) && Sandbox.checkin(repo)
     end | acc]
   end
 
   defp sandbox?(repo) do
-    repo.config[:pool] == Ecto.Adapters.SQL.Sandbox
+    repo.config[:pool] == Sandbox
   end
 end

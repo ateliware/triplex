@@ -5,6 +5,8 @@ defmodule Mix.Tasks.Triplex.Gen.Migration do
   import Mix.Generator
   import Mix.Ecto
 
+  alias Mix.Project
+
   @shortdoc "Generates a new tenant migration for the repo"
 
   @moduledoc """
@@ -48,7 +50,7 @@ defmodule Mix.Tasks.Triplex.Gen.Migration do
         {opts, [name], _} ->
           ensure_repo(repo, args)
           path = Path.relative_to(Triplex.migrations_path(repo),
-                                  Mix.Project.app_path)
+                                  Project.app_path)
           file = Path.join(path, "#{timestamp()}_#{underscore(name)}.exs")
           create_directory path
 

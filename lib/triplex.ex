@@ -21,10 +21,9 @@ defmodule Triplex do
   """
 
   import Mix.Ecto, only: [build_repo_priv: 1]
-  alias Ecto.{
-    Adapters.SQL,
-    Migrator
-  }
+  alias Ecto.Adapters.SQL
+  alias Ecto.Migrator
+  alias Postgrex.Error, as: PGError
 
   def config, do: struct(Triplex.Config, Application.get_all_env(:triplex))
 
@@ -99,7 +98,7 @@ defmodule Triplex do
       sql = "DROP SCHEMA \"#{to_prefix(tenant)}\" CASCADE"
       case SQL.query(repo, sql, []) do
         {:error, e} ->
-          {:error, Postgrex.Error.message(e)}
+          {:error, PGError.message(e)}
         result -> result
       end
     end
@@ -123,7 +122,7 @@ defmodule Triplex do
       """
       case SQL.query(repo, sql, []) do
         {:error, e} ->
-          {:error, Postgrex.Error.message(e)}
+          {:error, PGError.message(e)}
         result -> result
       end
     end
@@ -184,8 +183,8 @@ defmodule Triplex do
                          all: true,
                          prefix: to_prefix(tenant))}
     rescue
-      e in Postgrex.Error ->
-        {:error, Postgrex.Error.message(e)}
+      e in PGError ->
+        {:error, PGError.message(e)}
     after
       Code.compiler_options(ignore_module_conflict: false)
     end
@@ -226,7 +225,7 @@ defmodule Triplex do
             result
           end
         {:error, e} ->
-          {:error, Postgrex.Error.message(e)}
+          {:error, PGError.message(e)}
       end
     end
   end

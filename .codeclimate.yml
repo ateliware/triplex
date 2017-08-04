@@ -1,0 +1,13 @@
+---
+engines:
+  credo:
+    enabled: true
+    channel: "beta"
+  fixme:
+    enabled: true
+ratings:
+  paths:
+    - "**.ex"
+    - "**.exs"
+exclude_paths:
+  - test/

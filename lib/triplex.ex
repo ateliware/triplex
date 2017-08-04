@@ -306,6 +306,7 @@ defmodule Triplex do
   If the repo is not given, it uses the one you configured.
   """
   def migrate(tenant, repo \\ config().repo) do
+    Code.compiler_options(ignore_module_conflict: true)
     try do
       {:ok, Migrator.run(repo, migrations_path(repo), :up,
                          all: true,
@@ -313,6 +314,8 @@ defmodule Triplex do
     rescue
       e in Postgrex.Error ->
         {:error, Postgrex.Error.message(e)}
+    after
+      Code.compiler_options(ignore_module_conflict: false)
     end
   end
 

@@ -53,7 +53,10 @@ defmodule Triplex.Mixfile do
       {:postgrex, ">= 0.11.0"},
 
       {:ex_doc, ">= 0.0.0", only: :dev},
-      {:excoveralls, "~> 0.6", only: :test}
+
+      {:inch_ex, only: :docs},
+
+      {:excoveralls, "~> 0.6", only: :test},
     ]
   end
 

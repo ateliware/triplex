@@ -1,6 +1,7 @@
 # Triplex
 
 [![Build Status](https://travis-ci.org/ateliware/triplex.svg?branch=master)](https://travis-ci.org/ateliware/triplex)
+[![Coverage Status](https://coveralls.io/repos/github/ateliware/triplex/badge.svg)](https://coveralls.io/github/ateliware/triplex)
 
 An [apartment](https://github.com/influitive/apartment) for succesfull Phoenix
 programmers.

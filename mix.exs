@@ -4,7 +4,7 @@ defmodule Triplex.Mixfile do
   def project do
     [
       app: :triplex,
-      version: "1.0.0",
+      version: "1.1.0-rc.0",
       elixir: "~> 1.4",
 
       description: description(),
@@ -48,7 +48,7 @@ defmodule Triplex.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [
-      {:ecto, "~> 2.1"},
+      {:ecto, "~> 2.2.0-rc"},
       {:plug, "~> 1.3.5"},
       {:postgrex, ">= 0.11.0"},
 

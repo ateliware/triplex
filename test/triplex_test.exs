@@ -1,7 +1,7 @@
 defmodule TriplexTest do
   use ExUnit.Case
 
-  import Mix.Ecto, only: [build_repo_priv: 1]
+  import Mix.Ecto, only: [source_repo_priv: 1]
 
   alias Triplex.Note
   alias Triplex.TestRepo
@@ -63,7 +63,7 @@ defmodule TriplexTest do
   end
 
   test "migrations_path/1 must return the tenant migrations path" do
-    expected = Path.join(build_repo_priv(@repo), "tenant_migrations")
+    expected = Path.join(source_repo_priv(@repo), "tenant_migrations")
     assert Triplex.migrations_path(@repo) == expected
   end
 

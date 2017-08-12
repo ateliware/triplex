@@ -10,7 +10,7 @@ defmodule Mix.TriplexTest do
 
   test "ensure tenant migrations path" do
     msg = """
-    Could not find tenant migrations directory \"where/tenant_migrations\" for
+    Could not find tenant migrations directory \"#{Triplex.migrations_path(LostRepo)}\" for
     repo Mix.TriplexTest.LostRepo
     """
     assert_raise Mix.Error, msg, fn ->

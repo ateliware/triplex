@@ -57,7 +57,7 @@ defmodule Mix.Tasks.Triplex.Migrate do
   """
 
   @doc false
-  def run(args, migrator \\ &Migrator.run/4) do
+  def run(args, migrator \\ &Migrator.run/4, testing? \\ false) do
     repos = parse_repo(args)
 
     {opts, _, _} = OptionParser.parse args,
@@ -82,7 +82,7 @@ defmodule Mix.Tasks.Triplex.Migrate do
 
       # If the pool is Ecto.Adapters.SQL.Sandbox,
       # let's make sure we get a connection outside of a sandbox.
-      if sandbox?(repo) do
+      if sandbox?(repo) and !testing? do
         Sandbox.checkin(repo)
         Sandbox.checkout(repo, sandbox: false, ownership_timeout: :infinity)
       end

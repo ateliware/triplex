@@ -1,6 +1,7 @@
 defmodule Mix.TriplexTest do
   use ExUnit.Case, async: true
   import Mix.Triplex
+  alias Triplex.TestRepo
 
   defmodule LostRepo do
     def config do
@@ -16,5 +17,9 @@ defmodule Mix.TriplexTest do
     assert_raise Mix.Error, msg, fn ->
       ensure_tenant_migrations_path(LostRepo)
     end
+
+    assert ensure_tenant_migrations_path(TestRepo) == TestRepo
+    assert ensure_tenant_migrations_path(LostRepo,
+                                         apps_path: "apps") == LostRepo
   end
 end

@@ -257,7 +257,7 @@ defmodule Triplex do
 
   defp reserved_message(tenant) do
     """
-    You cannot create the schema because \"#{inspect(tenant)}\" is a reserved
+    You cannot create the schema because #{inspect(tenant)} is a reserved
     tenant
     """
   end

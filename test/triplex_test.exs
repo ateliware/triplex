@@ -23,9 +23,18 @@ defmodule TriplexTest do
 
   test "create/2 must return a error if the tenant already exists" do
     Triplex.create("lala", @repo)
-    expected = {:error,
-      "ERROR 42P06 (duplicate_schema): schema \"lala\" already exists"}
-    assert ^expected = Triplex.create("lala", @repo)
+    assert {:error, msg} = Triplex.create("lala", @repo)
+    assert msg ==
+      "ERROR 42P06 (duplicate_schema): schema \"lala\" already exists"
+  end
+
+  test "create/2 must return a error if the tenant is reserved" do
+    assert {:error, msg} = Triplex.create("www", @repo)
+    assert msg ==
+      """
+      You cannot create the schema because \"www\" is a reserved
+      tenant
+      """
   end
 
   test "drop/2 must drop a existent tenant" do
@@ -60,6 +69,13 @@ defmodule TriplexTest do
     for tenant <- tenants do
       refute Triplex.exists?(tenant, @repo)
     end
+  end
+
+  test "reserved_tenant?/1 returns if the given tenant is reserved" do
+    assert Triplex.reserved_tenant?(%{id: "www"}) == true
+    assert Triplex.reserved_tenant?("www") == true
+    assert Triplex.reserved_tenant?(%{id: "bla"}) == false
+    assert Triplex.reserved_tenant?("bla") == false
   end
 
   test "migrations_path/1 must return the tenant migrations path" do

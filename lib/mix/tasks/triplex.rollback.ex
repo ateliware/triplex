@@ -12,26 +12,36 @@ defmodule Mix.Tasks.Triplex.Rollback do
 
   @moduledoc """
   Reverts applied migrations in the given repository.
+
   The repository must be set under `:ecto_repos` in the
   current app configuration or given via the `-r` option.
+
   By default, migrations are expected at "priv/YOUR_REPO/migrations"
   directory of the current application but it can be configured
   by specifying the `:priv` key under the repository configuration.
+
   Runs the latest applied migration by default. To roll back to
   to a version number, supply `--to version_number`.
+
   To roll back a specific number of times, use `--step n`.
+
   To undo all applied migrations, provide `--all`.
+
   If the repository has not been started yet, one will be
   started outside our application supervision tree and shutdown
   afterwards.
+
   ## Examples
+
       mix ecto.rollback
       mix ecto.rollback -r Custom.Repo
       mix ecto.rollback -n 3
       mix ecto.rollback --step 3
       mix ecto.rollback -v 20080906120000
       mix ecto.rollback --to 20080906120000
+
   ## Command line options
+
     * `-r`, `--repo` - the repo to rollback
     * `--all` - revert all applied migrations
     * `--step` / `-n` - revert n number of applied migrations

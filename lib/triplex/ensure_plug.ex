@@ -8,7 +8,7 @@ defmodule Triplex.EnsurePlug do
         callback: &TenantHelper.callback/2
         failure_callback: &TenantHelper.failure_callback/2
 
-  See `Triplex.PlugConfig` to check all the allowed configuration flags.
+  See `Triplex.PlugConfig` to check all the allowed `config` flags.
   """
 
   import Triplex.Plug

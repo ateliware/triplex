@@ -9,7 +9,7 @@ defmodule Triplex.SessionPlug do
         session: :subdomain,
         tenant_handler: &TenantHelper.tenant_handler/1
 
-  See `Triplex.PlugConfig` to check all the allowed configuration flags.
+  See `Triplex.PlugConfig` to check all the allowed `config` flags.
   """
 
   import Triplex.Plug

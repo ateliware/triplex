@@ -25,6 +25,10 @@ defmodule Triplex do
   alias Ecto.Migrator
   alias Postgrex.Error, as: PGError
 
+  @doc """
+  Returns a `%Triplex.Config{}` struct with all the args loaded from the app
+  configuration.
+  """
   def config, do: struct(Triplex.Config, Application.get_all_env(:triplex))
 
   @doc """
@@ -50,8 +54,8 @@ defmodule Triplex do
 
   The function `to_prefix/1` will be applied to the tenant.
   """
-  def reserved_tenant?(map) when is_map(map) do
-    map
+  def reserved_tenant?(tenant) when is_map(tenant) do
+    tenant
     |> tenant_field()
     |> reserved_tenant?()
   end
@@ -106,9 +110,6 @@ defmodule Triplex do
 
   @doc """
   Renames the given tenant on the given repo.
-
-  If any given tenant is a map, it will apply `tenant_field/1` to it and get
-  the prefix from the field.
 
   If the repo is not given, it uses the one you configured.
   """
@@ -170,11 +171,11 @@ defmodule Triplex do
   end
 
   @doc """
-  Migrates the given tenant.
+  Migrates the given tenant on your repo.
 
   The function `to_prefix/1` will be applied to the tenant.
 
-  If the repo is not given, it uses the one you configured.
+  If the `repo` is not given, it uses the one you configured.
   """
   def migrate(tenant, repo \\ config().repo) do
     Code.compiler_options(ignore_module_conflict: true)
@@ -193,7 +194,7 @@ defmodule Triplex do
   @doc """
   Return the path for your tenant migrations.
 
-  If the repo is not given, it uses the one you configured.
+  If the `repo` is not given, it uses the one you configured.
   """
   def migrations_path(repo \\ config().repo) do
     if repo do
@@ -240,8 +241,8 @@ defmodule Triplex do
   will get the `tenant_field/0` from it to concat the prefix.
   """
   def to_prefix(tenant, prefix \\ config().tenant_prefix)
-  def to_prefix(map, prefix) when is_map(map) do
-    map
+  def to_prefix(tenant, prefix) when is_map(tenant) do
+    tenant
     |> tenant_field()
     |> to_prefix(prefix)
   end

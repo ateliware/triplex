@@ -64,6 +64,8 @@ And if you're sick of it and want to drop:
 Triplex.drop("my_tenant")
 ```
 
+More information on `Triplex` module documentation.
+
 ### Creating tables inside tenant
 
 To create a table inside your tenant you can use:
@@ -88,6 +90,9 @@ This task will migrate all your existent tenants, one by one. If it
 fail in any tenant, the next time you run it will continue from where
 it stoped.
 
+If you need more information, check the `Mix.Triplex` documentation, where
+you can find the list of tasks and their descriptions.
+
 ### Querying, updating and inserting data inside tenants
 
 To make queries, updates and inserts inside your tenant is quite easy.
@@ -101,3 +106,15 @@ Repo.all(User, prefix: Triplex.to_prefix("my_tenant"))
 It's a good idea to call `Triplex.to_prefix/1` on your tenant name, altough is
 not required. Because, if you configured a `tenant_prefix`, this function will
 return the prefixed one.
+
+### Loading the current tenant to your `Plug.Conn`
+
+We have some basic and configurable plugs you can use to load the current
+tenant on your web app. Here is an example loading it from the subdomain:
+
+```elixir
+plug Triplex.SubdomainPlug, endpoint: MyApp.Endpoint
+```
+
+For more information, check the `Triplex.Plug` documentation for an overview of
+our plugs.

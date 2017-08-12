@@ -57,18 +57,10 @@ defmodule Mix.Tasks.Triplex.Gen.Migration do
           assigns = [mod: Module.concat([repo, Migrations, camelize(name)]),
                      change: opts[:change]]
           create_file file, migration_template(assigns)
-
-          run_opened_migration(file, repo)
         {_, _, _} ->
           Mix.raise "expected ecto.gen.migration to receive the migration " <>
             "file name, got: #{inspect Enum.join(args, " ")}"
       end
-    end
-  end
-
-  defp run_opened_migration(file, repo) do
-    if open?(file) and Mix.shell.yes?("Do you want to run this migration?") do
-      Mix.Task.run "ecto.migrate", [repo]
     end
   end
 

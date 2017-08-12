@@ -31,18 +31,34 @@ defmodule Triplex.PlugTest do
     assert conn.assigns[:tenant] == "power"
   end
 
-  test "ensure_tenant/3 must call the success callback" do
-    callback = fn(conn, _) -> assign(conn, :test, "blog") end
+  test "put_tenant/3 must not set the tenant if it is already set" do
     conn =
       :get
       |> conn("/")
-      |> Plug.ensure_tenant(PlugConfig.new(failure_callback: callback))
-
-    assert conn.assigns[:test] == "blog"
-    assert conn.halted == true
+      |> assign(:current_tenant, "already_set")
+      |> Plug.put_tenant("power", PlugConfig.new())
+    assert conn.assigns[:current_tenant] == "already_set"
   end
 
-  test "ensure_tenant/3 must call the failure callback" do
+  test "put_tenant/3 must not set the tenant if it is reserved" do
+    conn =
+      :get
+      |> conn("/")
+      |> Plug.put_tenant("www", PlugConfig.new())
+    assert conn.assigns[:current_tenant] == nil
+  end
+
+  test "ensure_tenant/3 must halts the conn" do
+    conn =
+      :get
+      |> conn("/")
+      |> Plug.put_tenant("power", PlugConfig.new())
+      |> Plug.ensure_tenant(PlugConfig.new())
+
+    assert conn.halted == false
+  end
+
+  test "ensure_tenant/3 must call the success callback" do
     callback = fn(conn, _) -> assign(conn, :test, "blag") end
     conn =
       :get
@@ -51,6 +67,15 @@ defmodule Triplex.PlugTest do
       |> Plug.ensure_tenant(PlugConfig.new(callback: callback))
 
     assert conn.assigns[:test] == "blag"
-    assert conn.halted == false
+  end
+
+  test "ensure_tenant/3 must call the failure callback" do
+    callback = fn(conn, _) -> assign(conn, :test, "blog") end
+    conn =
+      :get
+      |> conn("/")
+      |> Plug.ensure_tenant(PlugConfig.new(failure_callback: callback))
+
+    assert conn.assigns[:test] == "blog"
   end
 end

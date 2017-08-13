@@ -17,7 +17,7 @@ The package can be installed as:
 
 ```elixir
 def deps do
-  [{:triplex, "~> 1.1.1"}]
+  [{:triplex, "~> 1.1.3"}]
 end
 ```
 

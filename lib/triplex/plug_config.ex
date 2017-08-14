@@ -34,7 +34,7 @@ defmodule Triplex.PlugConfig do
   ]
 
   @doc """
-  Creates a new `%Plug.Config{}`, normalizing the needed arguments.
+  Creates a new `%Plug.Config{}`, normalizing the given `args`.
   """
   def new(args \\ []),
     do: __MODULE__ |> struct(args) |> normalize_param()

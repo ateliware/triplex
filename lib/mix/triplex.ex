@@ -17,9 +17,18 @@ defmodule Mix.Triplex do
   alias Mix.Project
 
   @doc """
-  Ensures the migrations path exists for the given repo.
+  Ensures the migrations path exists for the given `repo`.
 
-  Raises a `Mix.raise` if it fails and returns the repo if succeed.
+  You can optionally give us the project `config` keyword list, the options we
+  use are:
+
+  - `apps_path` - this will be used to decide if it is an umbrella project, in
+  this case it never fails, because umbrellas does not have migrations and
+  that's right
+  - `app_path` - and this will be used to get the full path to the migrations
+  directory, which is relative to this path
+
+  Returns the unchanged `repo` if succeed or raises a `Mix.raise` if it fails.
   """
   def ensure_tenant_migrations_path(repo, config \\ Project.config()) do
     with false <- Project.umbrella?(config),

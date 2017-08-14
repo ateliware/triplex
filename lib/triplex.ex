@@ -50,7 +50,7 @@ defmodule Triplex do
   end
 
   @doc """
-  Returns if the given tenant is reserved or not.
+  Returns if the given `tenant` is reserved or not.
 
   The function `to_prefix/1` will be applied to the tenant.
   """
@@ -76,24 +76,20 @@ defmodule Triplex do
   end
 
   @doc """
-  Creates the given tenant on the given repo.
+  Creates the given `tenant` on the given `repo`.
 
   Besides creating the database itself, this function also loads their
   structure executing all migrations from inside
   `priv/YOUR_REPO/tenant_migrations` folder.
-
-  If the repo is not given, it uses the one you configured.
   """
   def create(tenant, repo \\ config().repo) do
     create_schema(tenant, repo, &(migrate(&1, &2)))
   end
 
   @doc """
-  Drops the given tenant on the given repo.
+  Drops the given tenant on the given `repo`.
 
-  The function `to_prefix/1` will be applied to the tenant.
-
-  If the repo is not given, it uses the one you configured.
+  The function `to_prefix/1` will be applied to the `tenant`.
   """
   def drop(tenant, repo \\ config().repo) do
     if reserved_tenant?(tenant) do
@@ -109,9 +105,10 @@ defmodule Triplex do
   end
 
   @doc """
-  Renames the given tenant on the given repo.
+  Renames the `old_tenant` to the `new_tenant` on the given `repo`.
 
-  If the repo is not given, it uses the one you configured.
+  The function `to_prefix/1` will be applied to the `old_tenant` and
+  `new_tenant`.
   """
   def rename(old_tenant, new_tenant, repo \\ config().repo) do
     if reserved_tenant?(new_tenant) do
@@ -130,11 +127,7 @@ defmodule Triplex do
   end
 
   @doc """
-  Returns all the tenants on the given repo.
-
-  The function `to_prefix/1` will be applied to the tenant.
-
-  If the repo is not given, it uses the one you configured.
+  Returns all the tenants on the given `repo`.
   """
   def all(repo \\ config().repo) do
     sql = """
@@ -149,11 +142,9 @@ defmodule Triplex do
   end
 
   @doc """
-  Returns if the tenant exists or not on the given repo.
+  Returns if the given `tenant` exists or not on the given `repo`.
 
-  The function `to_prefix/1` will be applied to the tenant.
-
-  If the repo is not given, it uses the one you configured.
+  The function `to_prefix/1` will be applied to the `tenant`.
   """
   def exists?(tenant, repo \\ config().repo) do
     if reserved_tenant?(tenant) do
@@ -171,11 +162,9 @@ defmodule Triplex do
   end
 
   @doc """
-  Migrates the given tenant on your repo.
+  Migrates the given `tenant` on your `repo`.
 
-  The function `to_prefix/1` will be applied to the tenant.
-
-  If the `repo` is not given, it uses the one you configured.
+  The function `to_prefix/1` will be applied to the `tenant`.
   """
   def migrate(tenant, repo \\ config().repo) do
     Code.compiler_options(ignore_module_conflict: true)
@@ -193,8 +182,6 @@ defmodule Triplex do
 
   @doc """
   Return the path for your tenant migrations.
-
-  If the `repo` is not given, it uses the one you configured.
   """
   def migrations_path(repo \\ config().repo) do
     if repo do
@@ -205,14 +192,12 @@ defmodule Triplex do
   end
 
   @doc """
-  Creates the tenant schema/database on the given repo.
+  Creates the `tenant` schema/database on the given `repo`.
 
-  After creating it successfully, the given function callback is called with
-  the tenant and the repo as arguments.
+  After creating it successfully, the given `func` callback is called with
+  the `tenant` and the `repo` as arguments.
 
-  The function `to_prefix/1` will be applied to the tenant.
-
-  If the repo is not given, it uses the one you configured.
+  The function `to_prefix/1` will be applied to the `tenant`.
   """
   def create_schema(tenant, repo \\ config().repo, func \\ nil) do
     if reserved_tenant?(tenant) do
@@ -232,11 +217,12 @@ defmodule Triplex do
   end
 
   @doc """
-  Returns the tenant name with the given prefix.
+  Returns the `tenant` name with the given `prefix`.
 
-  If the prefix is omitted, the `tenant_prefix` configuration will be used.
+  If the `prefix` is omitted, the `tenant_prefix` configuration from
+  `Triplex.Config` will be used.
 
-  The tenant can be a string, a map or a struct. For a string it will
+  The `tenant` can be a string, a map or a struct. For a string it will
   be used as the tenant name to concat the prefix. For a map or a struct, it
   will get the `tenant_field/0` from it to concat the prefix.
   """
@@ -250,7 +236,7 @@ defmodule Triplex do
   def to_prefix(tenant, prefix), do: "#{prefix}#{tenant}"
 
   @doc """
-  Returns the value of the configured tenant field on the given map.
+  Returns the value of the configured tenant field on the given `map`.
   """
   def tenant_field(map) do
     Map.get(map, config().tenant_field)

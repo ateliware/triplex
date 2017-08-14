@@ -18,7 +18,7 @@ defmodule Triplex.Plug do
   @raw_tenant_assign :raw_current_tenant
 
   @doc """
-  Puts the given tenant as an assign on the given conn, but only if the
+  Puts the given `tenant` as an assign on the given `conn`, but only if the
   tenant is not reserved.
 
   See `Triplex.PlugConfig` to the allowed `config` flags.

@@ -6,7 +6,7 @@
 [![Code Climate](https://img.shields.io/codeclimate/github/ateliware/triplex.svg)](https://codeclimate.com/github/ateliware/triplex)
 [![Inline docs](http://inch-ci.org/github/ateliware/triplex.svg?branch=master&style=flat)](http://inch-ci.org/github/ateliware/triplex)
 
-An [apartment](https://github.com/influitive/apartment) for succesfull Phoenix
+An [apartment](https://github.com/influitive/apartment) for succesful Elixir
 programmers.
 
 ## Installation

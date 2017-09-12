@@ -4,7 +4,7 @@ defmodule Triplex.Mixfile do
   def project do
     [
       app: :triplex,
-      version: "1.1.4",
+      version: "1.1.5",
       elixir: "~> 1.4",
 
       description: "Database multitenancy for Elixir applications.",

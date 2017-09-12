@@ -6,12 +6,12 @@
 [![Code Climate](https://img.shields.io/codeclimate/github/ateliware/triplex.svg)](https://codeclimate.com/github/ateliware/triplex)
 [![Inline docs](http://inch-ci.org/github/ateliware/triplex.svg?branch=master&style=flat)](http://inch-ci.org/github/ateliware/triplex)
 
-Triplex is elixir lib that makes multitenancy based on separate
+Triplex is an elixir lib that makes multitenancy based on separate
 databases/schemas easier for you!
 
 With one line of configuration and some function calls you can create, drop and
-migrate your tenant databases, as well as use your tenant names on your ecto
-queries and commands
+migrate your tenant databases, as well as executing ecto queries and commands
+inside them.
 
 It is inspired by the gem [apartment](https://github.com/influitive/apartment),
 which does exactly the same on the Ruby on Rails world.
@@ -30,7 +30,7 @@ The package can be installed as:
 
 ```elixir
 def deps do
-  [{:triplex, "~> 1.1.4"}]
+  [{:triplex, "~> 1.1.5"}]
 end
 ```
 

@@ -7,7 +7,7 @@ defmodule Triplex.Mixfile do
       version: "1.1.5",
       elixir: "~> 1.4",
 
-      description: "Database multitenancy for Elixir applications.",
+      description: "Build multitenant applications on top of Ecto.",
       package: package(),
       elixirc_paths: elixirc_paths(Mix.env),
       build_embedded: Mix.env == :prod,

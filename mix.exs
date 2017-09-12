@@ -4,10 +4,10 @@ defmodule Triplex.Mixfile do
   def project do
     [
       app: :triplex,
-      version: "1.1.4",
+      version: "1.1.5",
       elixir: "~> 1.4",
 
-      description: description(),
+      description: "Build multitenant applications on top of Ecto.",
       package: package(),
       elixirc_paths: elixirc_paths(Mix.env),
       build_embedded: Mix.env == :prod,
@@ -71,13 +71,6 @@ defmodule Triplex.Mixfile do
      "test.reset": ["ecto.drop", "ecto.create", "db.migrate"],
      "test.cover": &run_default_coverage/1,
      "test.cover.html": &run_html_coverage/1]
-  end
-
-  defp description do
-    """
-    An https://github.com/influitive/apartment for succesfull Phoenix
-    programmers.
-    """
   end
 
   defp package do

@@ -6,8 +6,25 @@
 [![Code Climate](https://img.shields.io/codeclimate/github/ateliware/triplex.svg)](https://codeclimate.com/github/ateliware/triplex)
 [![Inline docs](http://inch-ci.org/github/ateliware/triplex.svg?branch=master&style=flat)](http://inch-ci.org/github/ateliware/triplex)
 
-An [apartment](https://github.com/influitive/apartment) for succesful Elixir
-programmers.
+A simple and effective way to build multitenant applications on top of Ecto.
+
+It is built to keep data specific to each tenant (group of users) separate in
+the database using standard Ecto functions.
+
+Triplex includes mix tasks as well as a simple tenant management API to
+simplify defining and managing tenants, as well as executing queries and
+commands inside them.
+
+See the how to install, configure and use it in more details below.
+
+This lib is inspired by the gem
+[apartment](https://github.com/influitive/apartment), which does exactly the
+same on the Ruby on Rails world. We may also give some credit (and a lot of
+thanks) to @Dania02525 for the work on
+[apartmentex](https://github.com/Dania02525/apartmentex), a lot of the work
+here is based on what she has done there. And also to @jeffdeville which made a
+fork of it ([tenantex](https://github.com/jeffdeville/tenantex)) with a
+different approach, which gave us some ideas too.
 
 ## Installation
 
@@ -17,7 +34,9 @@ The package can be installed as:
 
 ```elixir
 def deps do
-  [{:triplex, "~> 1.1.4"}]
+  [
+    {:triplex, "~> 1.1.5"},
+  ]
 end
 ```
 

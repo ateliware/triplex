@@ -78,6 +78,8 @@ defmodule Triplex do
   @doc """
   Creates the given `tenant` on the given `repo`.
 
+  Returns `{:ok, tenant}` if successful or `{:error, reason}` otherwise.
+
   Besides creating the database itself, this function also loads their
   structure executing all migrations from inside
   `priv/YOUR_REPO/tenant_migrations` folder.
@@ -87,7 +89,34 @@ defmodule Triplex do
   end
 
   @doc """
+  Creates the `tenant` schema/database on the given `repo`.
+
+  Returns `{:ok, tenant}` if successful or `{:error, reason}` otherwise.
+
+  After creating it successfully, the given `func` callback is called with
+  the `tenant` and the `repo` as arguments.
+
+  The function `to_prefix/1` will be applied to the `tenant`.
+  """
+  def create_schema(tenant, repo \\ config().repo, func \\ nil) do
+    if reserved_tenant?(tenant) do
+      {:error, reserved_message(tenant)}
+    else
+      case SQL.query(repo, "CREATE SCHEMA \"#{to_prefix(tenant)}\"", []) do
+        {:ok, _} ->
+          if func, do: func.(tenant, repo)
+
+          {:ok, tenant}
+        {:error, e} ->
+          {:error, PGError.message(e)}
+      end
+    end
+  end
+
+  @doc """
   Drops the given tenant on the given `repo`.
+
+  Returns `{:ok, tenant}` if successful or `{:error, reason}` otherwise.
 
   The function `to_prefix/1` will be applied to the `tenant`.
   """
@@ -97,15 +126,18 @@ defmodule Triplex do
     else
       sql = "DROP SCHEMA \"#{to_prefix(tenant)}\" CASCADE"
       case SQL.query(repo, sql, []) do
+        {:ok, _} -> 
+          {:ok, tenant}
         {:error, e} ->
           {:error, PGError.message(e)}
-        result -> result
       end
     end
   end
 
   @doc """
   Renames the `old_tenant` to the `new_tenant` on the given `repo`.
+
+  Returns `{:ok, new_tenant}` if successful or `{:error, reason}` otherwise.
 
   The function `to_prefix/1` will be applied to the `old_tenant` and
   `new_tenant`.
@@ -119,9 +151,10 @@ defmodule Triplex do
       RENAME TO \"#{to_prefix(new_tenant)}\"
       """
       case SQL.query(repo, sql, []) do
+        {:ok, _} ->
+          {:ok, new_tenant}
         {:error, e} ->
           {:error, PGError.message(e)}
-        result -> result
       end
     end
   end
@@ -164,14 +197,20 @@ defmodule Triplex do
   @doc """
   Migrates the given `tenant` on your `repo`.
 
+  Returns `{:ok, migrated_versions}` if successful or `{:error, reason}` otherwise.
+
   The function `to_prefix/1` will be applied to the `tenant`.
   """
   def migrate(tenant, repo \\ config().repo) do
     Code.compiler_options(ignore_module_conflict: true)
     try do
-      {:ok, Migrator.run(repo, migrations_path(repo), :up,
-                         all: true,
-                         prefix: to_prefix(tenant))}
+      migrated_versions = Migrator.run(repo,
+                                       migrations_path(repo),
+                                       :up,
+                                       all: true,
+                                       prefix: to_prefix(tenant))
+
+      {:ok, migrated_versions}
     rescue
       e in PGError ->
         {:error, PGError.message(e)}
@@ -181,38 +220,13 @@ defmodule Triplex do
   end
 
   @doc """
-  Return the path for your tenant migrations.
+  Returns the path for your tenant migrations.
   """
   def migrations_path(repo \\ config().repo) do
     if repo do
       Path.join(source_repo_priv(repo), "tenant_migrations")
     else
       ""
-    end
-  end
-
-  @doc """
-  Creates the `tenant` schema/database on the given `repo`.
-
-  After creating it successfully, the given `func` callback is called with
-  the `tenant` and the `repo` as arguments.
-
-  The function `to_prefix/1` will be applied to the `tenant`.
-  """
-  def create_schema(tenant, repo \\ config().repo, func \\ nil) do
-    if reserved_tenant?(tenant) do
-      {:error, reserved_message(tenant)}
-    else
-      case SQL.query(repo, "CREATE SCHEMA \"#{to_prefix(tenant)}\"", []) do
-        {:ok, _} = result ->
-          if func do
-            func.(tenant, repo)
-          else
-            result
-          end
-        {:error, e} ->
-          {:error, PGError.message(e)}
-      end
     end
   end
 

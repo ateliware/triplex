@@ -4,7 +4,7 @@ defmodule Triplex.Mixfile do
   def project do
     [
       app: :triplex,
-      version: "1.1.5",
+      version: "1.2.0-dev",
       elixir: "~> 1.4",
 
       description: "Build multitenant applications on top of Ecto.",

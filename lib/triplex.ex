@@ -82,7 +82,10 @@ defmodule Triplex do
 
   Besides creating the database itself, this function also loads their
   structure executing all migrations from inside
-  `priv/YOUR_REPO/tenant_migrations` folder.
+  `priv/YOUR_REPO/tenant_migrations` folder. By calling `create_schema/3`
+  sending `migrate/2` as the `func` callback.
+
+  See `migrate/2` for more details about the migration running.
   """
   def create(tenant, repo \\ config().repo) do
     create_schema(tenant, repo, &(migrate(&1, &2)))
@@ -94,7 +97,9 @@ defmodule Triplex do
   Returns `{:ok, tenant}` if successful or `{:error, reason}` otherwise.
 
   After creating it successfully, the given `func` callback is called with
-  the `tenant` and the `repo` as arguments.
+  the `tenant` and the `repo` as arguments. The `func` must return
+  `{:ok, any}` if successfull or `{:error, reason}` otherwise. In the case
+  the `func` fails, this func will fail with the same `reason`.
 
   The function `to_prefix/1` will be applied to the `tenant`.
   """
@@ -102,14 +107,24 @@ defmodule Triplex do
     if reserved_tenant?(tenant) do
       {:error, reserved_message(tenant)}
     else
-      case SQL.query(repo, "CREATE SCHEMA \"#{to_prefix(tenant)}\"", []) do
-        {:ok, _} ->
-          if func, do: func.(tenant, repo)
-
-          {:ok, tenant}
-        {:error, e} ->
-          {:error, PGError.message(e)}
+      sql = "CREATE SCHEMA \"#{to_prefix(tenant)}\""
+      with {:ok, _} <- SQL.query(repo, sql, []),
+           {:ok, _} <- exec_func(func, tenant, repo) do
+        {:ok, tenant}
+      else
+        {:error, %PGError{} = e} -> {:error, PGError.message(e)}
+        {:error, msg} -> {:error, msg}
       end
+    end
+  end
+
+  defp exec_func(nil, tenant, _) do
+    {:ok, tenant}
+  end
+  defp exec_func(func, tenant, repo) when is_function(func) do
+    case func.(tenant, repo) do
+      {:ok, _} -> {:ok, tenant}
+      {:error, msg} -> {:error, msg}
     end
   end
 

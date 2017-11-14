@@ -8,27 +8,13 @@
 
 A simple and effective way to build multitenant applications on top of Ecto.
 
-It is built to keep data specific to each tenant (group of users) separate in
-the database using standard Ecto functions.
+[Documentation](https://hexdocs.pm/triplex/readme.html)
 
-Triplex includes mix tasks as well as a simple tenant management API to
-simplify defining and managing tenants, as well as executing queries and
-commands inside them.
+Triplex leverages database data segregation techniques (such as [Postgres schemas](https://www.postgresql.org/docs/current/static/ddl-schemas.html)) to keep tenant-specific data separated, while allowing you to continue using the Ecto functions you are familiar with.
 
-See the how to install, configure and use it in more details below.
 
-This lib is inspired by the gem
-[apartment](https://github.com/influitive/apartment), which does exactly the
-same on the Ruby on Rails world. We may also give some credit (and a lot of
-thanks) to @Dania02525 for the work on
-[apartmentex](https://github.com/Dania02525/apartmentex), a lot of the work
-here is based on what she has done there. And also to @jeffdeville which made a
-fork of it ([tenantex](https://github.com/jeffdeville/tenantex)) with a
-different approach, which gave us some ideas too.
 
-## Installation
-
-The package can be installed as:
+## Quick Start
 
 1. Add `triplex` to your list of dependencies in `mix.exs`:
 
@@ -46,94 +32,100 @@ end
 mix deps.get
 ```
 
+
 ## Configuration
 
-All you need to do in your project to start using it is to configure the Repo
-you will use to execute the database commands with:
+Configure the Repo you will use to execute the database commands with:
 
     config :triplex, repo: ExampleApp.Repo
+
 
 ## Usage
 
 Here is a quick overview of what you can do with triplex!
 
+
 ### Creating, renaming and droping tenants
 
-To create a new tenant:
+
+#### To create a new tenant:
 
 ```elixir
 Triplex.create("your_tenant")
 ```
 
-PS.: this will run the migrations, so it's a function that takes a while to
-complete depending on how much migrations you have.
+This will create a new database schema and run your migrations—which may take a while depending on your application.
 
-If you change your mind and want to rename te tenant:
+
+#### Rename a tenant:
 
 ```elixir
 Triplex.rename("your_tenant", "my_tenant")
 ```
 
-PS.: we encourage you to use an unchangable thing as your tenant name, that
-way you will not need to rename your tenant when changing the field.
+This is not something you should need to do often. :-)
 
-And if you're sick of it and want to drop:
+
+#### Delete a tenant:
 
 ```elixir
 Triplex.drop("my_tenant")
 ```
 
-More information on `Triplex` module documentation.
+More information on the API can be found in [documentation](https://hexdocs.pm/triplex/Triplex.html#content).
 
-### Creating tables inside tenant
 
-To create a table inside your tenant you can use:
+### Creating tenant migrations
+
+To create a migration to run across tenant schemas:
 
 ```bash
 mix triplex.gen.migration your_migration_name
 ```
 
-Also, you can move a normally generated migrations from inside
-`priv/YOUR_REPO/migrations` to the `priv/YOUR_REPO/tenant_migrations`
-folder.
+If migrating an existing project to use Triplex, you can move some or all of your existing migrations from `priv/YOUR_REPO/migrations` to  `priv/YOUR_REPO/tenant_migrations`.
 
-The schemas look the same way, nothing to change.
+Triplex and Ecto will automatically add prefixes to standard migration functions.  If you have _custom_ SQL in your migrations, you will need to use the [`prefix`](https://hexdocs.pm/ecto/Ecto.Migration.html#prefix/0) function provided by Ecto. e.g.
 
-To run the tenant migrations, just run:
+```elixir
+def up do
+  execute "CREATE INDEX name_trgm_index ON #{prefix()}.users USING gin (nam gin_trgm_ops);"
+end
+```
+
+
+### Running tenant migrations:
 
 ```bash
 mix triplex.migrate
 ```
 
-This task will migrate all your existent tenants, one by one. If it
-fail in any tenant, the next time you run it will continue from where
-it stoped.
+This will migrate all of your existing tenants, one by one.  In the case of failure, the next run will continue from where it stopped.
 
-If you need more information, check the `Mix.Triplex` documentation, where
-you can find the list of tasks and their descriptions.
 
-### Querying, updating and inserting data inside tenants
+### Using Ecto
 
-To make queries, updates and inserts inside your tenant is quite easy.
-Just send a `prefix` opt on your repo call with your current tenant name.
-Like this:
+Your Ecto usage only needs the `prefix` option.  Triplex provides a helper to coerce the tenant value into the proper format, e.g.:
 
 ```elixir
 Repo.all(User, prefix: Triplex.to_prefix("my_tenant"))
+Repo.get!(User, 123, prefix: Triplex.to_prefix("my_tenant"))
 ```
 
-It's a good idea to call `Triplex.to_prefix/1` on your tenant name, altough is
-not required. Because, if you configured a `tenant_prefix`, this function will
-return the prefixed one.
 
-### Loading the current tenant to your `Plug.Conn`
+### Fetching the tenant with Plug
 
-We have some basic and configurable plugs you can use to load the current
-tenant on your web app. Here is an example loading it from the subdomain:
+Triplex includes configurable plugs that you can use to load the current tenant in your application.
+
+Here is an example loading the tenant from the current subdomain:
 
 ```elixir
 plug Triplex.SubdomainPlug, endpoint: MyApp.Endpoint
 ```
 
-For more information, check the `Triplex.Plug` documentation for an overview of
-our plugs.
+For more information, check the `Triplex.Plug` documentation for an overview of our plugs.
+
+
+## Thanks
+
+This lib is inspired by the gem [apartment](https://github.com/influitive/apartment), which does the same thing in Ruby on Rails world. We also give credit (and a lot of thanks) to @Dania02525 for the work on [apartmentex](https://github.com/Dania02525/apartmentex).  A lot of the work here is based on what she has done there.  And also to @jeffdeville, who forked ([tenantex](https://github.com/jeffdeville/tenantex)) taking a different approach, which gave us additional ideas.

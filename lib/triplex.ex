@@ -220,7 +220,7 @@ defmodule Triplex do
   end
 
   @doc """
-  Returns the path for your tenant migrations.
+  Returns the path for the tenant migrations on your `repo`.
   """
   def migrations_path(repo \\ config().repo) do
     if repo do

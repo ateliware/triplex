@@ -4,13 +4,14 @@ defmodule Triplex.PlugTest do
   import Plug.Conn
   import Plug.Test
   alias Triplex.Plug
-  alias Triplex.PlugConfig
+  alias Triplex.ParamPlugConfig
+  alias Triplex.EnsurePlugConfig
 
   test "put_tenant/3 must set the tenant to the default assign" do
     conn =
       :get
       |> conn("/")
-      |> Plug.put_tenant("power", PlugConfig.new())
+      |> Plug.put_tenant("power", %ParamPlugConfig{})
     assert conn.assigns[:current_tenant] == "power"
   end
 
@@ -19,7 +20,7 @@ defmodule Triplex.PlugTest do
     conn =
       :get
       |> conn("/")
-      |> Plug.put_tenant("oi", PlugConfig.new(tenant_handler: handler))
+      |> Plug.put_tenant("oi", %ParamPlugConfig{tenant_handler: handler})
     assert conn.assigns[:current_tenant] == "olá"
   end
 
@@ -27,7 +28,7 @@ defmodule Triplex.PlugTest do
     conn =
       :get
       |> conn("/")
-      |> Plug.put_tenant("power", PlugConfig.new(assign: :tenant))
+      |> Plug.put_tenant("power", %ParamPlugConfig{assign: :tenant})
     assert conn.assigns[:tenant] == "power"
   end
 
@@ -36,7 +37,7 @@ defmodule Triplex.PlugTest do
       :get
       |> conn("/")
       |> assign(:current_tenant, "already_set")
-      |> Plug.put_tenant("power", PlugConfig.new())
+      |> Plug.put_tenant("power", %ParamPlugConfig{})
     assert conn.assigns[:current_tenant] == "already_set"
   end
 
@@ -44,7 +45,7 @@ defmodule Triplex.PlugTest do
     conn =
       :get
       |> conn("/")
-      |> Plug.put_tenant("www", PlugConfig.new())
+      |> Plug.put_tenant("www", %ParamPlugConfig{})
     assert conn.assigns[:current_tenant] == nil
   end
 
@@ -52,8 +53,8 @@ defmodule Triplex.PlugTest do
     conn =
       :get
       |> conn("/")
-      |> Plug.put_tenant("power", PlugConfig.new())
-      |> Plug.ensure_tenant(PlugConfig.new())
+      |> Plug.put_tenant("power", %ParamPlugConfig{})
+      |> Plug.ensure_tenant(%EnsurePlugConfig{})
 
     assert conn.halted == false
   end
@@ -63,8 +64,8 @@ defmodule Triplex.PlugTest do
     conn =
       :get
       |> conn("/")
-      |> Plug.put_tenant("power", PlugConfig.new())
-      |> Plug.ensure_tenant(PlugConfig.new(callback: callback))
+      |> Plug.put_tenant("power", %ParamPlugConfig{})
+      |> Plug.ensure_tenant(%EnsurePlugConfig{callback: callback})
 
     assert conn.assigns[:test] == "blag"
   end
@@ -74,7 +75,7 @@ defmodule Triplex.PlugTest do
     conn =
       :get
       |> conn("/")
-      |> Plug.ensure_tenant(PlugConfig.new(failure_callback: callback))
+      |> Plug.ensure_tenant(%EnsurePlugConfig{failure_callback: callback})
 
     assert conn.assigns[:test] == "blog"
   end

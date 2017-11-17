@@ -9,24 +9,25 @@ defmodule Triplex.SubdomainPlug do
         endpoint: MyApp.Endpoint,
         tenant_handler: &TenantHelper.tenant_handler/1
 
-  See `Triplex.PlugConfig` to check all the allowed `config` flags.
+  See `Triplex.SubdomainPlugConfig` to check all the allowed `config` flags.
   """
 
   import Triplex.Plug
   alias Plug.Conn
-  alias Triplex.PlugConfig
+  alias Triplex.SubdomainPlugConfig
 
   @doc false
-  def init(opts), do: PlugConfig.new(opts)
+  def init(opts), do: struct(SubdomainPlugConfig, opts)
 
   @doc false
   def call(conn, config),
     do: put_tenant(conn, get_subdomain(conn, config), config)
 
-  defp get_subdomain(_conn, %PlugConfig{endpoint: nil}) do
+  defp get_subdomain(_conn, %SubdomainPlugConfig{endpoint: nil}) do
     nil
   end
-  defp get_subdomain(%Conn{host: host}, %PlugConfig{endpoint: endpoint}) do
+  defp get_subdomain(%Conn{host: host},
+                     %SubdomainPlugConfig{endpoint: endpoint}) do
     root_host = endpoint.config(:url)[:host]
     if host in [root_host, "localhost", "127.0.0.1", "0.0.0.0"] do
       nil

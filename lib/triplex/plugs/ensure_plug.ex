@@ -8,14 +8,14 @@ defmodule Triplex.EnsurePlug do
         callback: &TenantHelper.callback/2
         failure_callback: &TenantHelper.failure_callback/2
 
-  See `Triplex.PlugConfig` to check all the allowed `config` flags.
+  See `Triplex.EnsurePlugConfig` to check all the allowed `config` flags.
   """
 
   import Triplex.Plug
-  alias Triplex.PlugConfig
+  alias Triplex.EnsurePlugConfig
 
   @doc false
-  def init(opts), do: PlugConfig.new(opts)
+  def init(opts), do: struct(EnsurePlugConfig, opts)
 
   @doc false
   def call(conn, config), do: ensure_tenant(conn, config)

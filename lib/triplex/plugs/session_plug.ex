@@ -9,15 +9,15 @@ defmodule Triplex.SessionPlug do
         session: :subdomain,
         tenant_handler: &TenantHelper.tenant_handler/1
 
-  See `Triplex.PlugConfig` to check all the allowed `config` flags.
+  See `Triplex.SessionPlugConfig` to check all the allowed `config` flags.
   """
 
   import Triplex.Plug
   import Plug.Conn
-  alias Triplex.PlugConfig
+  alias Triplex.SessionPlugConfig
 
   @doc false
-  def init(opts), do: PlugConfig.new(opts)
+  def init(opts), do: struct(SessionPlugConfig, opts)
 
   @doc false
   def call(conn, config),

@@ -42,7 +42,7 @@ defmodule Mix.Tasks.Triplex.Migrations do
       ensure_tenant_migrations_path(repo)
       {:ok, pid, _} = ensure_started(repo, all: true)
 
-      repo_status = migrations.(repo, Triplex.migrations_path(repo))
+      repo_status = migrations.(repo, Mix.Triplex.migrations_path(repo))
 
       pid && repo.stop(pid)
 

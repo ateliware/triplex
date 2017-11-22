@@ -103,7 +103,7 @@ defmodule Mix.Tasks.Triplex.Migrate do
     opts = Keyword.put(opts, :prefix, tenant)
 
     [try do
-       migrator.(repo, Triplex.migrations_path(repo), :up, opts)
+       migrator.(repo, Mix.Triplex.migrations_path(repo), :up, opts)
     after
       sandbox?(repo) && Sandbox.checkin(repo)
     end | acc]

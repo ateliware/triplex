@@ -1,8 +1,6 @@
 defmodule TriplexTest do
   use ExUnit.Case
 
-  import Mix.Ecto, only: [source_repo_priv: 1]
-
   alias Triplex.Note
   alias Triplex.TestRepo
 
@@ -54,7 +52,7 @@ defmodule TriplexTest do
     Triplex.create("lala", @repo)
     Triplex.create("lili", @repo)
     Triplex.create("lolo", @repo)
-    assert Triplex.all(@repo) == ["lala", "lili", "lolo"]
+    assert MapSet.new(Triplex.all(@repo)) == MapSet.new(["lala", "lili", "lolo"])
   end
 
   test "exists?/2 for a not created tenant returns false" do
@@ -79,7 +77,7 @@ defmodule TriplexTest do
   end
 
   test "migrations_path/1 must return the tenant migrations path" do
-    expected = Path.join(source_repo_priv(@repo), "tenant_migrations")
+    expected = Application.app_dir(:triplex, "priv/test_repo/tenant_migrations")
     assert Triplex.migrations_path(@repo) == expected
   end
 

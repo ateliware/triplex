@@ -20,7 +20,7 @@ defmodule Triplex.ParamPlug do
 
   @doc false
   def call(conn, config),
-    do: put_tenant(conn, get_param(conn, config.param), config)
+    do: put_tenant(conn, get_param(conn, config), config)
 
   defp get_param(conn, %ParamPlugConfig{param: key}),
     do: get_param(conn, key)

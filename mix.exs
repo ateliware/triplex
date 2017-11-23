@@ -49,8 +49,9 @@ defmodule Triplex.Mixfile do
   defp deps do
     [
       {:ecto, "~> 2.1"},
-      {:plug, "~> 1.3"},
       {:postgrex, ">= 0.11.0"},
+
+      {:plug, "~> 1.3", optional: true},
 
       {:ex_doc, ">= 0.0.0", only: :dev},
 
@@ -68,9 +69,9 @@ defmodule Triplex.Mixfile do
   # See the documentation for `Mix` for more info on aliases.
   defp aliases do
     ["db.migrate": ["ecto.migrate", "triplex.migrate"],
-     "test.reset": ["ecto.drop", "ecto.create", "db.migrate"],
-     "test.cover": &run_default_coverage/1,
-     "test.cover.html": &run_html_coverage/1]
+    "test.reset": ["ecto.drop", "ecto.create", "db.migrate"],
+    "test.cover": &run_default_coverage/1,
+    "test.cover.html": &run_html_coverage/1]
   end
 
   defp package do
@@ -86,11 +87,11 @@ defmodule Triplex.Mixfile do
 
   defp preferred_cli_env do
     ["coveralls": :test,
-     "coveralls.travis": :test,
-     "coveralls.detail": :test,
-     "coveralls.post": :test,
-     "coveralls.html": :test,
-     "test.reset": :test]
+    "coveralls.travis": :test,
+    "coveralls.detail": :test,
+    "coveralls.post": :test,
+    "coveralls.html": :test,
+    "test.reset": :test]
   end
 
   defp run_default_coverage(args), do: run_coverage("coveralls", args)

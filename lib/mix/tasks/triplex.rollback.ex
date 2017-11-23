@@ -103,7 +103,7 @@ defmodule Mix.Tasks.Triplex.Rollback do
     opts = Keyword.put(opts, :prefix, tenant)
 
     [try do
-       migrator.(repo, Triplex.migrations_path(repo), :down, opts)
+       migrator.(repo, Mix.Triplex.migrations_path(repo), :down, opts)
     after
       sandbox?(repo) && Sandbox.checkin(repo)
     end | acc]

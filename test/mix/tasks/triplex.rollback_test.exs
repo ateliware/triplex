@@ -15,7 +15,7 @@ defmodule Mix.Tasks.Triplex.RollbackTest do
     Triplex.create("rollback_test2", @repo)
 
     run(["-r", @repo, "--step=1", "--quiet"], fn(@repo, path, :down, opts) ->
-      assert path == Triplex.migrations_path(@repo)
+      assert path == Mix.Triplex.migrations_path(@repo)
       assert opts[:step] == 1
       assert opts[:log] == false
 
@@ -30,4 +30,3 @@ defmodule Mix.Tasks.Triplex.RollbackTest do
     refute_received :error
   end
 end
-

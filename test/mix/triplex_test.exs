@@ -1,7 +1,10 @@
 defmodule Mix.TriplexTest do
   use ExUnit.Case, async: true
+
   import Mix.Triplex
   alias Triplex.TestRepo
+
+  @repo TestRepo
 
   defmodule LostRepo do
     def config do
@@ -11,7 +14,7 @@ defmodule Mix.TriplexTest do
 
   test "ensure tenant migrations path" do
     msg = """
-    Could not find tenant migrations directory \"#{Triplex.migrations_path(LostRepo)}\" for
+    Could not find tenant migrations directory \"#{Mix.Triplex.migrations_path(LostRepo)}\" for
     repo Mix.TriplexTest.LostRepo
     """
     assert_raise Mix.Error, msg, fn ->
@@ -21,5 +24,10 @@ defmodule Mix.TriplexTest do
     assert ensure_tenant_migrations_path(TestRepo) == TestRepo
     assert ensure_tenant_migrations_path(LostRepo,
                                          apps_path: "apps") == LostRepo
+  end
+
+  test "migrations_path/1 must return the tenant migrations path" do
+    expected = "priv/test_repo/tenant_migrations"
+    assert Mix.Triplex.migrations_path(@repo) == expected
   end
 end

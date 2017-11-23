@@ -15,7 +15,7 @@ defmodule Mix.Tasks.Triplex.MigrateTest do
     Triplex.create_schema("migrate_test2", @repo)
 
     run(["-r", @repo, "--step=1", "--quiet"], fn(@repo, path, :up, opts) ->
-      assert path == Triplex.migrations_path(@repo)
+      assert path == Mix.Triplex.migrations_path(@repo)
       assert opts[:step] == 1
       assert opts[:log] == false
 

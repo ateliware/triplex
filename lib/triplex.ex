@@ -20,7 +20,6 @@ defmodule Triplex do
   return the prefixed one.
   """
 
-  import Mix.Ecto, only: [source_repo_priv: 1]
   alias Ecto.Adapters.SQL
   alias Ecto.Migrator
   alias Postgrex.Error, as: PGError
@@ -141,7 +140,7 @@ defmodule Triplex do
     else
       sql = "DROP SCHEMA \"#{to_prefix(tenant)}\" CASCADE"
       case SQL.query(repo, sql, []) do
-        {:ok, _} -> 
+        {:ok, _} ->
           {:ok, tenant}
         {:error, e} ->
           {:error, PGError.message(e)}
@@ -238,11 +237,14 @@ defmodule Triplex do
   Returns the path for the tenant migrations on your `repo`.
   """
   def migrations_path(repo \\ config().repo) do
-    if repo do
-      Path.join(source_repo_priv(repo), "tenant_migrations")
-    else
-      ""
-    end
+    path =
+      repo.config()
+      |> Keyword.get(:priv, "priv/#{repo |> Module.split |> List.last |> Macro.underscore}")
+      |> Path.join("tenant_migrations")
+
+    repo.config()
+    |> Keyword.get(:otp_app)
+    |> Application.app_dir(path)
   end
 
   @doc """

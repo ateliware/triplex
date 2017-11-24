@@ -27,7 +27,6 @@ defmodule Mix.TriplexTest do
   end
 
   test "migrations_path/1 must return the tenant migrations path" do
-    expected = "priv/test_repo/tenant_migrations"
-    assert Mix.Triplex.migrations_path(@repo) == expected
+    assert Mix.Triplex.migrations_path(@repo) =~ ~r(priv/test_repo/tenant_migrations$)
   end
 end

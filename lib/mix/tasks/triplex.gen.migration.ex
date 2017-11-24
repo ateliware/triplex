@@ -69,8 +69,7 @@ defmodule Mix.Tasks.Triplex.Gen.Migration do
     "#{y}#{pad(m)}#{pad(d)}#{pad(hh)}#{pad(mm)}#{pad(ss)}"
   end
 
-  defp pad(i) when i < 10, do: << ?0, ?0 + i >>
-  defp pad(i), do: to_string(i)
+  defp pad(i), do: i |> to_string() |> String.pad_leading(2, "0")
 
   embed_template :migration, """
   defmodule <%= inspect @mod %> do

@@ -1,7 +1,8 @@
 # Triplex
 
 [![Build Status](https://travis-ci.org/ateliware/triplex.svg?branch=master)](https://travis-ci.org/ateliware/triplex)
-[![Hex pm](http://img.shields.io/hexpm/v/triplex.svg?style=flat)](https://hex.pm/packages/triplex)
+[![Version](http://img.shields.io/hexpm/v/triplex.svg?style=flat)](https://hex.pm/packages/triplex)
+[![Downloads](https://img.shields.io/hexpm/dt/triplex.svg)](https://hex.pm/packages/triplex)
 [![Coverage Status](https://coveralls.io/repos/github/ateliware/triplex/badge.svg?branch=master)](https://coveralls.io/github/ateliware/triplex?branch=master)
 [![Code Climate](https://img.shields.io/codeclimate/github/ateliware/triplex.svg)](https://codeclimate.com/github/ateliware/triplex)
 [![Inline docs](http://inch-ci.org/github/ateliware/triplex.svg?branch=master&style=flat)](http://inch-ci.org/github/ateliware/triplex)

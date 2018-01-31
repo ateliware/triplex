@@ -187,8 +187,7 @@ defmodule Triplex do
       SELECT schema_name
       FROM information_schema.schemata
       """
-    %Postgrex.Result{rows: result} = SQL.query!(repo, sql, [])
-
+    %{rows: result} = SQL.query!(repo, sql, [])
     result
     |> List.flatten
     |> Enum.filter(&(!reserved_tenant?(&1)))

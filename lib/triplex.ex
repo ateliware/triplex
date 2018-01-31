@@ -106,7 +106,10 @@ defmodule Triplex do
     if reserved_tenant?(tenant) do
       {:error, reserved_message(tenant)}
     else
-      sql = "CREATE SCHEMA \"#{to_prefix(tenant)}\""
+      sql = case repo.__adapter__ do
+        Ecto.Adapters.MySQL -> "CREATE DATABASE #{to_prefix(tenant)}"
+        _ -> "CREATE SCHEMA \"#{to_prefix(tenant)}\""
+      end
       with {:ok, _} <- SQL.query(repo, sql, []),
            {:ok, _} <- exec_func(func, tenant, repo) do
         {:ok, tenant}
@@ -138,7 +141,10 @@ defmodule Triplex do
     if reserved_tenant?(tenant) do
       {:error, reserved_message(tenant)}
     else
-      sql = "DROP SCHEMA \"#{to_prefix(tenant)}\" CASCADE"
+      sql = case repo.__adapter__ do
+        Ecto.Adapters.MySQL -> "DROP DATABASE #{to_prefix(tenant)}"
+        _ -> "DROP SCHEMA \"#{to_prefix(tenant)}\" CASCADE"
+      end
       case SQL.query(repo, sql, []) do
         {:ok, _} ->
           {:ok, tenant}

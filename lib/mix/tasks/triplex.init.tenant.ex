@@ -5,9 +5,10 @@ defmodule Mix.Tasks.Triplex.Init.Tenant do
   import Mix.Generator
   import Mix.Ecto
 
+  alias Ecto.Adapters.SQL
   alias Mix.Project
 
-  @migration_name "create_tenants"
+  @migration_name "create_tenant"
 
   @shortdoc "Generates a migration for the tenant table in the default database"
 
@@ -32,7 +33,7 @@ defmodule Mix.Tasks.Triplex.Init.Tenant do
       file = Path.join(path, "#{timestamp()}_#{@migration_name}.exs")
       create_directory path
 
-      create_file file, migration_template(repo: repo, migration_name: @migration_name)
+      create_file file, migration_template(repo: repo, migration_name: @migration_name, tenant_table: Triplex.config().tenant_table)
     end
   end
 
@@ -48,10 +49,10 @@ defmodule Mix.Tasks.Triplex.Init.Tenant do
     use Ecto.Migration
 
     def change do
-      create table(:tenants) do
+      create table(:<%= @tenant_table %>) do
         add :name, :string
       end
-      create unique_index(:tenants, [:name])
+      create unique_index(:<%= @tenant_table %>, [:name])
     end
   end
   """

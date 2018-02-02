@@ -10,6 +10,6 @@ defmodule Triplex.Config do
   if the given tenant is a struct. By default it's `:id`.
   """
 
-  defstruct [:repo, :tenant_prefix, reserved_tenants: [], tenant_field: :id]
+  defstruct [:repo, :tenant_prefix, reserved_tenants: [], tenant_field: :id, tenant_table: :tenants]
 end
 

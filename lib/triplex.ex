@@ -87,7 +87,15 @@ defmodule Triplex do
   See `migrate/2` for more details about the migration running.
   """
   def create(tenant, repo \\ config().repo) do
-    create_schema(tenant, repo, &(migrate(&1, &2)))
+    adapter = repo.__adapter__
+    with {:ok, msg} <- create_schema(tenant, repo, &(migrate(&1, &2))) do
+      if adapter == Ecto.Adapters.MySQL do
+        case SQL.query(repo, "INSERT INTO #{Triplex.config().tenant_table} (name) VALUES (?)", [tenant]) do
+          {:error, msg} -> {:error, msg}
+          _ -> {:ok, msg}
+        end
+      end
+    end
   end
 
   @doc """
@@ -141,11 +149,17 @@ defmodule Triplex do
     if reserved_tenant?(tenant) do
       {:error, reserved_message(tenant)}
     else
-      sql = case repo.__adapter__ do
+      adapter = repo.__adapter__
+      sql = case adapter do
         Ecto.Adapters.MySQL -> "DROP DATABASE #{to_prefix(tenant)}"
         _ -> "DROP SCHEMA \"#{to_prefix(tenant)}\" CASCADE"
       end
       case SQL.query(repo, sql, []) do
+        {:ok, _} when adapter == Ecto.Adapters.MySQL ->
+          case SQL.query(repo, "DELETE FROM #{Triplex.config().tenant_table} WHERE NAME = ?", [tenant]) do
+            {:error, msg} -> {:error, msg}
+            _ -> {:ok, tenant}
+          end
         {:ok, _} ->
           {:ok, tenant}
         {:error, e} ->
@@ -163,9 +177,12 @@ defmodule Triplex do
   `new_tenant`.
   """
   def rename(old_tenant, new_tenant, repo \\ config().repo) do
-    if reserved_tenant?(new_tenant) do
+    cond do
+     reserved_tenant?(new_tenant) ->
       {:error, reserved_message(new_tenant)}
-    else
+    repo.__adapter__ == Ecto.Adapters.MySQL ->
+      {:error, "you cannot rename tenants in a MySQL database. You will have to drop the tenant and recreate it with a different name"}
+    true ->
       sql = """
       ALTER SCHEMA \"#{to_prefix(old_tenant)}\"
       RENAME TO \"#{to_prefix(new_tenant)}\"
@@ -183,10 +200,15 @@ defmodule Triplex do
   Returns all the tenants on the given `repo`.
   """
   def all(repo \\ config().repo) do
-    sql = """
-      SELECT schema_name
-      FROM information_schema.schemata
-      """
+    sql = case repo.__adapter__ do
+      Ecto.Adapters.MySQL ->
+        "SELECT name FROM #{config().tenant_table}"
+      _ ->
+        """
+        SELECT schema_name
+        FROM information_schema.schemata
+        """
+    end
     %{rows: result} = SQL.query!(repo, sql, [])
     result
     |> List.flatten
@@ -202,14 +224,19 @@ defmodule Triplex do
     if reserved_tenant?(tenant) do
       false
     else
-      sql = """
+      sql = case repo.__adapter__ do
+        Ecto.Adapters.MySQL ->
+          "SELECT COUNT(*) FROM #{config().tenant_table} WHERE name = ?"
+        _ ->
+        """
         SELECT COUNT(*)
         FROM information_schema.schemata
         WHERE schema_name = $1
         """
-      %Postgrex.Result{rows: [[count]]} =
-        SQL.query!(repo, sql, [to_prefix(tenant)])
-      count == 1
+    end
+    %{rows: [[count]]} =
+      SQL.query!(repo, sql, [to_prefix(tenant)])
+    count == 1
     end
   end
 

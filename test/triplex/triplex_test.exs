@@ -9,9 +9,26 @@ defmodule TriplexTest do
   @tenant "trilegal"
 
   setup do
-    Ecto.Adapters.SQL.Sandbox.mode(@repo, :manual)
-
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(@repo)
+    if @repo.__adapter__ == Ecto.Adapters.MySQL do
+      # DDL operations in MySQL automatically issue a transaction commit.
+      # This is not compatible with the :manual/:shared sandbox mode, which
+      # wraps each checked out connection in a transaction
+      # Therefore, when dealing with DDL operations in MySQL in a test, we have
+      # to "clean up" ourselves
+      Ecto.Adapters.SQL.Sandbox.mode(@repo, :auto)
+      drop_tenants = fn ->
+        Triplex.drop("lala", @repo)
+        Triplex.drop("lili", @repo)
+        Triplex.drop("lolo", @repo)
+        Triplex.drop(@tenant, @repo)
+      end
+      drop_tenants.()
+      on_exit drop_tenants
+      :ok
+    else
+      Ecto.Adapters.SQL.Sandbox.mode(@repo, :manual)
+      :ok = Ecto.Adapters.SQL.Sandbox.checkout(@repo)
+    end
   end
 
   test "create/2 must create a new tenant" do
@@ -22,8 +39,13 @@ defmodule TriplexTest do
   test "create/2 must return a error if the tenant already exists" do
     Triplex.create("lala", @repo)
     assert {:error, msg} = Triplex.create("lala", @repo)
-    assert msg ==
-      "ERROR 42P06 (duplicate_schema): schema \"lala\" already exists"
+    if @repo.__adapter__ == Ecto.Adapters.MySQL do
+      assert msg =~
+        "Can't create database 'lala'; database exists"
+    else
+      assert msg ==
+        "ERROR 42P06 (duplicate_schema): schema \"lala\" already exists"
+    end
   end
 
   test "create/2 must return a error if the tenant is reserved" do
@@ -42,10 +64,12 @@ defmodule TriplexTest do
   end
 
   test "rename/3 must drop a existent tenant" do
-    Triplex.create("lala", @repo)
-    Triplex.rename("lala", "lolo", @repo)
-    refute Triplex.exists?("lala", @repo)
-    assert Triplex.exists?("lolo", @repo)
+    if @repo.__adapter__ != Ecto.Adapters.MySQL do
+      Triplex.create("lala", @repo)
+      Triplex.rename("lala", "lolo", @repo)
+      refute Triplex.exists?("lala", @repo)
+      assert Triplex.exists?("lolo", @repo)
+    end
   end
 
   test "all/1 must return all tenants" do
@@ -95,11 +119,10 @@ defmodule TriplexTest do
   test "migrate/2 returns an error tuple when it fails" do
     create_and_migrate_tenant()
 
-    force_migration_failure fn(expected_postgres_error) ->
+    force_migration_failure fn(expected_error) ->
       {status, error_message} = Triplex.migrate(@tenant, @repo)
-
       assert status == :error
-      assert error_message == expected_postgres_error
+      assert error_message == expected_error
     end
   end
 
@@ -117,8 +140,14 @@ defmodule TriplexTest do
   end
 
   defp assert_notes_table_is_dropped do
-    assert_raise Postgrex.Error, fn ->
-      find_tenant_notes()
+    if @repo.__adapter__ == Ecto.Adapters.MySQL do
+      assert_raise Mariaex.Error, fn ->
+        find_tenant_notes()
+      end
+    else
+      assert_raise Postgrex.Error, fn ->
+        find_tenant_notes()
+      end
     end
   end
 
@@ -142,15 +171,25 @@ defmodule TriplexTest do
   end
 
   defp force_migration_failure(migration_function) do
-    sql = """
-    DELETE FROM "#{@tenant}"."schema_migrations"
-    """
+    sql = case @repo.__adapter__ do
+      Ecto.Adapters.MySQL -> """
+      DELETE FROM #{@tenant}.schema_migrations
+      """
+      _ -> """
+      DELETE FROM "#{@tenant}"."schema_migrations"
+      """
+    end
+    {:ok, _ } = Ecto.Adapters.SQL.query(@repo, sql, [])
 
-    Ecto.Adapters.SQL.query(@repo, sql, [])
-
-    migration_function.(
-      "ERROR 42P07 (duplicate_table): relation \"notes\" already exists"
-    )
+    if @repo.__adapter__ == Ecto.Adapters.MySQL do 
+      migration_function.(
+        "(1050): Table 'notes' already exists"
+      )
+    else
+      migration_function.(
+        "ERROR 42P07 (duplicate_table): relation \"notes\" already exists"
+      )
+    end
   end
 end
 

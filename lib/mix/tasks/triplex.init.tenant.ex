@@ -5,7 +5,6 @@ defmodule Mix.Tasks.Triplex.Init.Tenant do
   import Mix.Generator
   import Mix.Ecto
 
-  alias Ecto.Adapters.SQL
   alias Mix.Project
 
   @migration_name "create_tenant"

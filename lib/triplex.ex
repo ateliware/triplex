@@ -88,15 +88,7 @@ defmodule Triplex do
   See `migrate/2` for more details about the migration running.
   """
   def create(tenant, repo \\ config().repo) do
-    adapter = repo.__adapter__
-    with {:ok, msg} <- create_schema(tenant, repo, &(migrate(&1, &2))) do
-      if adapter == Ecto.Adapters.MySQL do
-        case SQL.query(repo, "INSERT INTO #{Triplex.config().tenant_table} (name) VALUES (?)", [tenant]) do
-          {:error, msg} -> {:error, msg}
-          _ -> {:ok, msg}
-        end
-      end
-    end
+    create_schema(tenant, repo, &(migrate(&1, &2)))
   end
 
   @doc """
@@ -120,6 +112,7 @@ defmodule Triplex do
         _ -> "CREATE SCHEMA \"#{to_prefix(tenant)}\""
       end
       with {:ok, _} <- SQL.query(repo, sql, []),
+           {:ok, _} <- add_to_tenants_table(tenant, repo),
            {:ok, _} <- exec_func(func, tenant, repo) do
         {:ok, tenant}
       else
@@ -130,6 +123,13 @@ defmodule Triplex do
     end
   end
 
+  defp add_to_tenants_table(tenant, repo) do
+    if repo.__adapter__ == Ecto.Adapters.MySQL do
+      SQL.query(repo, "INSERT INTO #{Triplex.config().tenant_table} (name) VALUES (?)", [tenant])
+    else
+      {:ok, :skipped}
+    end
+  end
   defp exec_func(nil, tenant, _) do
     {:ok, tenant}
   end

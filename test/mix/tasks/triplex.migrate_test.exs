@@ -35,7 +35,9 @@ defmodule Mix.Tasks.Triplex.MigrateTest do
     end, true)
     assert_received {:ok, "migrate_test1"}
     assert_received {:ok, "migrate_test2"}
+  end
 
+  test "does not run if there are no tenants" do
     run(["-r", @repo], fn(_, _, _, _) ->
       send self(), :error
     end, false)

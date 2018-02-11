@@ -130,6 +130,13 @@ defmodule Triplex do
       {:ok, :skipped}
     end
   end
+  defp remove_from_tenants_table(tenant, repo) do
+    if repo.__adapter__ == Ecto.Adapters.MySQL do
+      SQL.query(repo, "DELETE FROM #{Triplex.config().tenant_table} WHERE NAME = ?", [tenant])
+    else
+      {:ok, :skipped}
+    end
+  end
   defp exec_func(nil, tenant, _) do
     {:ok, tenant}
   end
@@ -156,14 +163,11 @@ defmodule Triplex do
         Ecto.Adapters.MySQL -> "DROP DATABASE #{to_prefix(tenant)}"
         _ -> "DROP SCHEMA \"#{to_prefix(tenant)}\" CASCADE"
       end
-      case SQL.query(repo, sql, []) do
-        {:ok, _} when adapter == Ecto.Adapters.MySQL ->
-          case SQL.query(repo, "DELETE FROM #{Triplex.config().tenant_table} WHERE NAME = ?", [tenant]) do
-            {:error, msg} -> {:error, msg}
-            _ -> {:ok, tenant}
-          end
-        {:ok, _} ->
-          {:ok, tenant}
+      with {:ok, _} <- SQL.query(repo, sql, []),
+        {:ok, _} <- remove_from_tenants_table(tenant, repo)
+      do
+        {:ok, tenant}
+      else
         {:error, %PGError{} = e} ->
           {:error, PGError.message(e)}
         {:error, %MXError{} = e} ->
@@ -185,7 +189,7 @@ defmodule Triplex do
      reserved_tenant?(new_tenant) ->
       {:error, reserved_message(new_tenant)}
     repo.__adapter__ == Ecto.Adapters.MySQL ->
-      {:error, "you cannot rename tenants in a MySQL database. You will have to drop the tenant and recreate it with a different name"}
+      {:error, "you cannot rename tenants in a MySQL database."}
     true ->
       sql = """
       ALTER SCHEMA \"#{to_prefix(old_tenant)}\"
@@ -209,7 +213,7 @@ defmodule Triplex do
     sql = case repo.__adapter__ do
       Ecto.Adapters.MySQL ->
         "SELECT name FROM #{config().tenant_table}"
-      _ ->
+      Ecto.Adapters.Postgres ->
         """
         SELECT schema_name
         FROM information_schema.schemata
@@ -233,7 +237,7 @@ defmodule Triplex do
       sql = case repo.__adapter__ do
         Ecto.Adapters.MySQL ->
           "SELECT COUNT(*) FROM #{config().tenant_table} WHERE name = ?"
-        _ ->
+        Ecto.Adapters.Postgres ->
         """
         SELECT COUNT(*)
         FROM information_schema.schemata

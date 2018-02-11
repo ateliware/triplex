@@ -49,7 +49,7 @@ defmodule Triplex.Mixfile do
   defp deps do
     [
       {:ecto, "~> 2.1"},
-      {:postgrex, ">= 0.11.0", optional: true},
+      {:postgrex, ">= 0.11.0"},
       {:mariaex, "~> 0.8.2", optional: true},
       
       {:plug, "~> 1.3", optional: true},

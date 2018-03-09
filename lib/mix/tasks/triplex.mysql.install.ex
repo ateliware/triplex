@@ -1,4 +1,4 @@
-defmodule Mix.Tasks.Triplex.Init.Tenant do
+defmodule Mix.Tasks.Triplex.Mysql.Install do
   use Mix.Task
 
   import Macro, only: [camelize: 1]

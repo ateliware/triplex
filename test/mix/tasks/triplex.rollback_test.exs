@@ -5,9 +5,19 @@ defmodule Mix.Tasks.Triplex.RollbackTest do
   @repo Triplex.TestRepo
 
   setup do
-    Ecto.Adapters.SQL.Sandbox.mode(@repo, :manual)
-
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(@repo)
+    if @repo.__adapter__ == Ecto.Adapters.MySQL do
+      Ecto.Adapters.SQL.Sandbox.mode(@repo, :auto)
+      drop_tenants = fn -> 
+        Triplex.drop("rollback_test1", @repo)
+        Triplex.drop("rollback_test2", @repo)
+      end
+      drop_tenants.()
+      on_exit drop_tenants
+      :ok
+    else 
+      Ecto.Adapters.SQL.Sandbox.mode(@repo, :manual)
+      :ok = Ecto.Adapters.SQL.Sandbox.checkout(@repo)
+    end
   end
 
   test "runs migration rollback for each tenant, with the correct prefix" do
@@ -23,7 +33,9 @@ defmodule Mix.Tasks.Triplex.RollbackTest do
     end, true)
     assert_received {:ok, "rollback_test1"}
     assert_received {:ok, "rollback_test2"}
+  end
 
+  test "does not run if there are no tenants" do
     run(["-r", @repo], fn(_, _, _, _) ->
       send self(), :error
     end, false)

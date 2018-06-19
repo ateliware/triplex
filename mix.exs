@@ -50,7 +50,8 @@ defmodule Triplex.Mixfile do
     [
       {:ecto, "~> 2.1"},
       {:postgrex, ">= 0.11.0"},
-
+      {:mariaex, "~> 0.8.2", optional: true},
+      
       {:plug, "~> 1.3", optional: true},
 
       {:ex_doc, ">= 0.0.0", only: :dev},

@@ -42,21 +42,34 @@ defmodule Mix.Tasks.Triplex.Migrations do
       ensure_tenant_migrations_path(repo)
       {:ok, pid, _} = ensure_started(repo, all: true)
 
-      repo_status = migrations.(repo, Mix.Triplex.migrations_path(repo))
+      migration_lists = migrations.(repo, Mix.Triplex.migrations_path(repo))
+      tenant_state = Enum.map_join(Triplex.all(repo), fn tenant ->
 
+        tenant_versions = Migrator.migrated_versions(repo, prefix: tenant)
+        repo_status = Enum.map migration_lists, fn
+          {_, ts, desc} ->
+          if Enum.member? tenant_versions, ts do
+            {:up, ts, desc}
+          else
+            {:down, ts, desc}              
+          end
+        end
+        """
+
+        Repo: #{inspect repo}
+        Tenant: #{tenant}
+
+          Status    Migration ID    Migration Name
+        --------------------------------------------------
+        #{migrations_table(repo_status)}
+        """
+      end)
       pid && repo.stop(pid)
 
-      """
-
-      Repo: #{inspect repo}
-
-        Status    Migration ID    Migration Name
-      --------------------------------------------------
-      #{migrations_table(repo_status)}
-      """
+      tenant_state
     end)
 
-     puts.(Enum.join(result, "\n"))
+    puts.(Enum.join(result, "\n"))
   end
 
   defp migrations_table(repo_status) do

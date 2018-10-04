@@ -284,7 +284,7 @@ defmodule Triplex do
     path =
       repo.config()
       |> Keyword.get(:priv, "priv/#{repo |> Module.split |> List.last |> Macro.underscore}")
-      |> Path.join("tenant_migrations")
+      |> Path.join(config().migrations_path || "tenant_migrations")
 
     repo.config()
     |> Keyword.get(:otp_app)

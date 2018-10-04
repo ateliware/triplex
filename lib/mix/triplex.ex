@@ -29,7 +29,7 @@ defmodule Mix.Triplex do
   def migrations_path(repo) do
     repo
     |> source_repo_priv()
-    |> Path.join("tenant_migrations")
+    |> Path.join(config().migrations_path || "tenant_migrations")
   end
 
   @doc """

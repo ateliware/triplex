@@ -13,7 +13,7 @@ defmodule Triplex.Config do
   defstruct [
     :repo,
     :tenant_prefix,
-    :migrations_path,
+    migrations_path: "tenant_migrations",
     reserved_tenants: [],
     tenant_field: :id,
     tenant_table: :tenants

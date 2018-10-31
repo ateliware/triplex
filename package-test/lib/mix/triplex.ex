@@ -22,7 +22,7 @@ defmodule Mix.Triplex do
   @doc """
   Returns the path for your tenant migrations.
   """
-  #def migrations_path(repo \\ config().repo)
+  def migrations_path(repo \\ config().repo)
   def migrations_path(nil) do
     ""
   end

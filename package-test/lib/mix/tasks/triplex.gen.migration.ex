@@ -1,0 +1,83 @@
+defmodule Mix.Tasks.Triplex.Gen.Migration do
+  use Mix.Task
+
+  import Macro, only: [camelize: 1, underscore: 1]
+  import Mix.Generator
+  import Mix.Ecto
+
+  alias Mix.Project
+
+  @shortdoc "Generates a new tenant migration for the repo"
+
+  @moduledoc """
+  Generates a migration.
+
+  The repository must be set under `:ecto_repos` in the
+  current app configuration or given via the `-r` option.
+
+  ## Examples
+
+      mix triplex.gen.migration add_posts_table
+      mix triplex.gen.migration add_posts_table -r Custom.Repo
+
+  By default, the migration will be generated to the
+  "priv/YOUR_REPO/migrations" directory of the current application
+  but it can be configured to be any subdirectory of `priv` by
+  specifying the `:priv` key under the repository configuration.
+
+  This generator will automatically open the generated file if
+  you have `ECTO_EDITOR` set in your environment variable.
+
+  ## Command line options
+
+    * `-r`, `--repo` - the repo to generate migration for
+
+  ## PS
+
+  All of this code is copied from `mix ecto.gen.migration` task, if something
+  does not work, please compare them and try to stay as close to it as possible.
+  """
+
+  @switches [change: :string]
+
+  @doc false
+  def run(args) do
+    no_umbrella!("ecto.gen.migration")
+    repos = parse_repo(args)
+
+    Enum.each repos, fn repo ->
+      case OptionParser.parse(args, switches: @switches) do
+        {opts, [name], _} ->
+          ensure_repo(repo, args)
+          path = Path.relative_to(Mix.Triplex.migrations_path(repo),
+                                  Project.app_path)
+          file = Path.join(path, "#{timestamp()}_#{underscore(name)}.exs")
+          create_directory path
+
+          assigns = [mod: Module.concat([repo, Migrations, camelize(name)]),
+                     change: opts[:change]]
+          create_file file, migration_template(assigns)
+        {_, _, _} ->
+          Mix.raise "expected ecto.gen.migration to receive the migration " <>
+            "file name, got: #{inspect Enum.join(args, " ")}"
+      end
+    end
+  end
+
+  defp timestamp do
+    {{y, m, d}, {hh, mm, ss}} = :calendar.universal_time()
+    "#{y}#{pad(m)}#{pad(d)}#{pad(hh)}#{pad(mm)}#{pad(ss)}"
+  end
+
+  defp pad(i), do: i |> to_string() |> String.pad_leading(2, "0")
+
+  embed_template :migration, """
+  defmodule <%= inspect @mod %> do
+    use Ecto.Migration
+
+    def change do
+  <%= @change %>
+    end
+  end
+  """
+end

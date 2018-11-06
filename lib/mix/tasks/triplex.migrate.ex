@@ -1,6 +1,7 @@
 defmodule Mix.Tasks.Triplex.Migrate do
   use Mix.Task
   require Logger
+  import Mix.EctoSQL
   import Mix.Ecto
   import Mix.Triplex
 

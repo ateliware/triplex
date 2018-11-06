@@ -1,5 +1,6 @@
 defmodule Mix.Tasks.Triplex.Migrations do
   use Mix.Task
+  import Mix.EctoSQL
   import Mix.Ecto
   import Mix.Triplex
 

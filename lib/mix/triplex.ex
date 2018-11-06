@@ -16,7 +16,7 @@ defmodule Mix.Triplex do
 
   alias Mix.Project
 
-  import Mix.Ecto, only: [source_repo_priv: 1]
+  import Mix.EctoSQL, only: [source_repo_priv: 1]
   import Triplex, only: [config: 0]
 
   @doc """

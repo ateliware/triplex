@@ -4,7 +4,7 @@ defmodule Triplex.Mixfile do
   def project do
     [
       app: :triplex,
-      version: "1.2.0-dev",
+      version: "1.2.1-dev",
       elixir: "~> 1.6",
 
       description: "Build multitenant applications on top of Ecto.",
@@ -50,7 +50,7 @@ defmodule Triplex.Mixfile do
     [
       {:ecto_sql, "~> 3.0"},
       {:postgrex, ">= 0.14.0"},
-      {:mariaex, "~> 0.9.0", optional: true},
+      {:mariaex, "~> 0.9.0"},
       
       {:plug, "~> 1.3", optional: true},
 

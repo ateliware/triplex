@@ -45,7 +45,7 @@ defmodule Mix.Tasks.Triplex.Mysql.Install do
 
   embed_template :migration, """
   defmodule <%= Module.concat([@repo, Migrations, camelize(@migration_name)]) %> do
-    use Ecto.Migration
+    use EctoSQL.Migration
 
     def change do
       create table(:<%= @tenant_table %>) do

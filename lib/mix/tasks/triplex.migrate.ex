@@ -6,7 +6,7 @@ defmodule Mix.Tasks.Triplex.Migrate do
   import Mix.Triplex
 
   alias Ecto.Adapters.SQL.Sandbox
-  alias Ecto.Migrator
+  alias EctoSQL.Migrator
 
   @shortdoc "Runs the repository tenant migrations"
   @recursive true

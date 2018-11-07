@@ -4,7 +4,7 @@ defmodule Mix.Tasks.Triplex.Migrations do
   import Mix.Ecto
   import Mix.Triplex
 
-  alias EctoSQL.Migrator
+  alias Ecto.Migrator
 
   @shortdoc "Displays the repository migration status"
   @recursive true

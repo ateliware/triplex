@@ -1,7 +1,7 @@
 defmodule Mix.Tasks.Triplex.MigrationsTest do
   use ExUnit.Case
   import Mix.Tasks.Triplex.Migrations, only: [run: 3]
-  alias EctoSQL.Migrator
+  alias Ecto.Migrator
 
   @repo Triplex.TestRepo
 

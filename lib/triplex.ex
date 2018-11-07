@@ -21,7 +21,7 @@ defmodule Triplex do
   """
 
   alias Ecto.Adapters.SQL
-  alias EctoSQL.Migrator
+  alias Ecto.Migrator
   alias Postgrex.Error, as: PGError
   alias Mariaex.Error, as: MXError
 

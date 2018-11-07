@@ -6,7 +6,7 @@ defmodule Mix.Tasks.Triplex.Rollback do
   import Mix.Triplex
 
   alias Ecto.Adapters.SQL.Sandbox
-  alias EctoSQL.Migrator
+  alias Ecto.Migrator
 
   @shortdoc "Rolls back the repository tenant migrations"
   @recursive true

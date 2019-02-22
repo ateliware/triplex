@@ -51,14 +51,10 @@ defmodule Triplex.Mixfile do
       {:ecto_sql, "~> 3.0"},
       {:postgrex, ">= 0.14.0"},
       {:mariaex, "~> 0.9.0"},
-      
-      {:plug, "~> 1.3", optional: true},
-
+      {:plug, "~> 1.6", optional: true},
       {:ex_doc, ">= 0.0.0", only: :dev},
-
       {:inch_ex, ">= 0.0.0", only: :docs},
-
-      {:excoveralls, "~> 0.6", only: :test},
+      {:excoveralls, "~> 0.10", only: :test},
     ]
   end
 
@@ -70,6 +66,7 @@ defmodule Triplex.Mixfile do
   # See the documentation for `Mix` for more info on aliases.
   defp aliases do
     ["db.migrate": ["ecto.migrate", "triplex.migrate"],
+    "test": ["ecto.create --quiet", "ecto.migrate", "test"],
     "test.reset": ["ecto.drop", "ecto.create", "db.migrate"],
     "test.cover": &run_default_coverage/1,
     "test.cover.html": &run_html_coverage/1]

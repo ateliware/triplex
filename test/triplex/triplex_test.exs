@@ -9,26 +9,16 @@ defmodule TriplexTest do
   @tenant "trilegal"
 
   setup do
-    if @repo.__adapter__ == Ecto.Adapters.MySQL do
-      # DDL operations in MySQL automatically issue a transaction commit.
-      # This is not compatible with the :manual/:shared sandbox mode, which
-      # wraps each checked out connection in a transaction
-      # Therefore, when dealing with DDL operations in MySQL in a test, we have
-      # to "clean up" ourselves
-      Ecto.Adapters.SQL.Sandbox.mode(@repo, :auto)
-      drop_tenants = fn ->
-        Triplex.drop("lala", @repo)
-        Triplex.drop("lili", @repo)
-        Triplex.drop("lolo", @repo)
-        Triplex.drop(@tenant, @repo)
-      end
-      drop_tenants.()
-      on_exit drop_tenants
-      :ok
-    else
-      Ecto.Adapters.SQL.Sandbox.mode(@repo, :manual)
-      :ok = Ecto.Adapters.SQL.Sandbox.checkout(@repo)
+    Ecto.Adapters.SQL.Sandbox.mode(@repo, :auto)
+    drop_tenants = fn ->
+      Triplex.drop("lala", @repo)
+      Triplex.drop("lili", @repo)
+      Triplex.drop("lolo", @repo)
+      Triplex.drop(@tenant, @repo)
     end
+    drop_tenants.()
+    on_exit drop_tenants
+    :ok
   end
 
   test "create/2 must create a new tenant" do
@@ -44,7 +34,7 @@ defmodule TriplexTest do
         "Can't create database 'lala'; database exists"
     else
       assert msg ==
-        "ERROR 42P06 (duplicate_schema): schema \"lala\" already exists"
+        "ERROR 42P06 (duplicate_schema) schema \"lala\" already exists"
     end
   end
 
@@ -181,13 +171,13 @@ defmodule TriplexTest do
     end
     {:ok, _ } = Ecto.Adapters.SQL.query(@repo, sql, [])
 
-    if @repo.__adapter__ == Ecto.Adapters.MySQL do 
+    if @repo.__adapter__ == Ecto.Adapters.MySQL do
       migration_function.(
         "(1050): Table 'notes' already exists"
       )
     else
       migration_function.(
-        "ERROR 42P07 (duplicate_table): relation \"notes\" already exists"
+        "ERROR 42P07 (duplicate_table) relation \"notes\" already exists"
       )
     end
   end

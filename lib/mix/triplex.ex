@@ -14,8 +14,6 @@ defmodule Mix.Triplex do
   rolls back the repository tenant migrations
   """
 
-  alias Mix.Project
-
   import Mix.EctoSQL, only: [source_repo_priv: 1]
   import Triplex, only: [config: 0]
 
@@ -35,33 +33,31 @@ defmodule Mix.Triplex do
   @doc """
   Ensures the migrations path exists for the given `repo`.
 
-  You can optionally give us the project `config` keyword list, the options we
-  use are:
-
-  - `apps_path` - this will be used to decide if it is an umbrella project, in
-  this case it never fails, because umbrellas does not have migrations and
-  that's right
-  - `app_path` - and this will be used to get the full path to the migrations
-  directory, which is relative to this path
-
-  Returns the unchanged `repo` if succeed or raises a `Mix.raise` if it fails.
+  Returns the path for the `repo` tenant migrations folder if succeeds
+  or `Mix.raise`'s if it fails.
   """
-  def ensure_tenant_migrations_path(repo, config \\ Project.config()) do
-    with false <- Project.umbrella?(config),
-         path = relative_migrations_path(repo, config),
-         false <- File.dir?(path) do
-      Mix.raise """
-      Could not find tenant migrations directory #{inspect path} for
-      repo #{inspect repo}
-      """
+  def ensure_tenant_migrations_path(repo) do
+    path = Path.join(source_repo_priv(repo), "tenant_migrations")
+
+    if not Mix.Project.umbrella? and not File.dir?(path) do
+      raise_missing_migrations(Path.relative_to_cwd(path), repo)
     end
 
-    repo
+    path
   end
 
-  defp relative_migrations_path(repo, config) do
-    repo
-    |> migrations_path()
-    |> Path.relative_to(Project.app_path(config))
+  defp raise_missing_migrations(path, repo) do
+    Mix.raise """
+    Could not find migrations directory #{inspect path}
+    for repo #{inspect repo}.
+
+    This may be because you are in a new project and the
+    migration directory has not been created yet. Creating an
+    empty directory at the path above will fix this error.
+
+    If you expected existing migrations to be found, please
+    make sure your repository has been properly configured
+    and the configured path exists.
+    """
   end
 end

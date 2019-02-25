@@ -19,6 +19,11 @@ defmodule Mix.Tasks.Triplex.Migrate do
 
       config :my_app, MyApp.Repo, priv: "priv/custom_repo"
 
+  To change the "tenant_migrations" part, you can set the `:migrations_path`
+  config under triplex configuration. For example, to use "priv/repo/my_migrations":
+
+      config :triplex, migrations_path: "my_migrations"
+
   This task runs all pending tenant migrations by default. To migrate up to a
   specific version number, supply `--to version_number`. To migrate a
   specific number of times, use `--step n`.

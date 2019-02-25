@@ -281,10 +281,11 @@ defmodule Triplex do
   Returns the path for the tenant migrations on your `repo`.
   """
   def migrations_path(repo \\ config().repo) do
-    config = repo.config()
-    priv = config[:priv] || "priv/#{repo |> Module.split |> List.last |> Macro.underscore}"
-    app = Keyword.fetch!(config, :otp_app)
-    Application.app_dir(app, Path.join(priv, "tenant_migrations"))
+    repo
+    |> Migrator.migrations_path()
+    |> Path.join("..")
+    |> Path.join(config().migrations_path)
+    |> Path.expand()
   end
 
   @doc """

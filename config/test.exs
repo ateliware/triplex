@@ -9,7 +9,6 @@ config :triplex,
 # Configure your database
 config :triplex, ecto_repos: [Triplex.TestRepo]
 config :triplex, Triplex.TestRepo,
-  adapter: EctoSQL.Adapters.Postgres,
   username: System.get_env("PG_USERNAME") || "postgres",
   password: System.get_env("PG_PASSWORD") || "postgres",
   hostname: System.get_env("PG_HOST") || "localhost",

@@ -43,7 +43,7 @@ defmodule Mix.Tasks.Triplex.Migrations do
       ensure_tenant_migrations_path(repo)
       {:ok, pid, _} = ensure_started(repo, all: true)
 
-      migration_lists = migrations.(repo, Mix.Triplex.migrations_path(repo))
+      migration_lists = migrations.(repo, Triplex.migrations_path(repo))
       tenant_state = Enum.map_join(Triplex.all(repo), fn tenant ->
 
         tenant_versions = Migrator.migrated_versions(repo, prefix: tenant)
@@ -52,7 +52,7 @@ defmodule Mix.Tasks.Triplex.Migrations do
           if Enum.member? tenant_versions, ts do
             {:up, ts, desc}
           else
-            {:down, ts, desc}              
+            {:down, ts, desc}
           end
         end
         """

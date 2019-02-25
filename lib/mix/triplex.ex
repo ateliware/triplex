@@ -39,28 +39,13 @@ defmodule Mix.Triplex do
   ]
 
   @doc """
-  Returns the path for your tenant migrations.
-  """
-  def migrations_path(repo \\ config().repo)
-
-  def migrations_path(nil) do
-    ""
-  end
-
-  def migrations_path(repo) do
-    repo
-    |> source_repo_priv()
-    |> Path.join(config().migrations_path)
-  end
-
-  @doc """
   Ensures the migrations path exists for the given `repo`.
 
   Returns the path for the `repo` tenant migrations folder if succeeds
   or `Mix.raise`'s if it fails.
   """
   def ensure_tenant_migrations_path(repo) do
-    path = Path.join(source_repo_priv(repo), "tenant_migrations")
+    path = Path.join(source_repo_priv(repo), config().migrations_path)
 
     if not Mix.Project.umbrella? and not File.dir?(path) do
       raise_missing_migrations(Path.relative_to_cwd(path), repo)

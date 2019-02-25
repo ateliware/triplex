@@ -2,10 +2,11 @@ defmodule Mix.Tasks.Triplex.Gen.MigrationTest do
   use ExUnit.Case, async: true
 
   import Support.FileHelpers
+  import Triplex, only: [config: 0]
   import Mix.Tasks.Triplex.Gen.Migration, only: [run: 1]
 
   tmp_path = Path.join(tmp_path(), inspect(Triplex.Gen.Migration))
-  @migrations_path Path.join(tmp_path, "tenant_migrations")
+  @migrations_path Path.join(tmp_path, config().migrations_path)
 
   defmodule Repo do
     def __adapter__ do

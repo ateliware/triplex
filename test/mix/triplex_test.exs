@@ -45,17 +45,11 @@ defmodule Mix.TriplexTest do
       Path.expand("priv/test_repo/tenant_migrations")
   end
 
-  test "migrations_path/1 must return the tenant migrations path" do
-    assert Mix.Triplex.migrations_path() == ""
-    assert Mix.Triplex.migrations_path(@repo) =~ ~r(priv/test_repo/tenant_migrations$)
-  end
-
   test "runs migration for each tenant, with the correct prefix" do
     Triplex.create("test1", @repo)
     Triplex.create("test2", @repo)
 
-    run_tenant_migrations(@args, :down, fn(@repo, path, :down, opts) ->
-      assert path == Mix.Triplex.migrations_path(@repo)
+    run_tenant_migrations(@args, :down, fn(@repo, _, :down, opts) ->
       assert opts[:step] == 1
       assert opts[:log] == false
 

@@ -49,8 +49,8 @@ defmodule Triplex.Mixfile do
   defp deps do
     [
       {:ecto_sql, "~> 3.0"},
-      {:postgrex, ">= 0.14.0"},
-      {:mariaex, "~> 0.9.0"},
+      {:postgrex, ">= 0.14.0", optional: true},
+      {:mariaex, "~> 0.9.0", optional: true},
       {:plug, "~> 1.6", optional: true},
       {:ex_doc, ">= 0.0.0", only: :dev},
       {:inch_ex, ">= 0.0.0", only: :docs},

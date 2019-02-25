@@ -14,16 +14,39 @@ defmodule Mix.Triplex do
   rolls back the repository tenant migrations
   """
 
-  import Mix.EctoSQL, only: [source_repo_priv: 1]
+  import Mix.Ecto
+  import Mix.EctoSQL
   import Triplex, only: [config: 0]
+
+  @aliases [
+    r: :repo,
+    n: :step
+  ]
+
+  @switches [
+    all: :boolean,
+    step: :integer,
+    to: :integer,
+    start: :boolean,
+    quiet: :boolean,
+    prefix: :string,
+    pool_size: :integer,
+    log_sql: :boolean,
+    strict_version_order: :boolean,
+    repo: [:keep, :string],
+    no_compile: :boolean,
+    no_deps_check: :boolean
+  ]
 
   @doc """
   Returns the path for your tenant migrations.
   """
   def migrations_path(repo \\ config().repo)
+
   def migrations_path(nil) do
     ""
   end
+
   def migrations_path(repo) do
     repo
     |> source_repo_priv()
@@ -62,21 +85,45 @@ defmodule Mix.Triplex do
   end
 
   @doc """
-  Runs the `migrator` function for the given `tenant` on the
-  given `repo`.
-
-  If the `pool` has the `unboxed_run/2` function, it executes the
-  `migrator` function within it, otherwise it runs it directly.
-
-  The `path`, `direction` and `opts` are bypassed to the `migrator`
-  function.
+  Runs the tenant migrations with the given `args` and using
+  `migrator` function.
   """
-  def run_migrator(tenant, pool, migrator, repo, path, direction, opts) do
-    opts = Keyword.put(opts, :prefix, tenant)
-    if function_exported?(pool, :unboxed_run, 2) do
-      pool.unboxed_run(repo, fn -> migrator.(repo, path, direction, opts) end)
-    else
-      migrator.(repo, path, direction, opts)
-    end
+  def run_tenant_migrations(args, direction, migrator \\ &Ecto.Migrator.run/4) do
+    repos = parse_repo(args)
+    {opts, _} = OptionParser.parse! args, strict: @switches, aliases: @aliases
+
+    opts =
+      if opts[:to] || opts[:step] || opts[:all],
+        do: opts,
+        else: Keyword.put(opts, :step, 1)
+
+    opts =
+      if opts[:quiet],
+        do: Keyword.merge(opts, [log: false, log_sql: false]),
+        else: opts
+
+    Enum.each repos, &run_tenant_migrations(&1, args, opts, direction, migrator)
+  end
+
+  defp run_tenant_migrations(repo, args, opts, direction, migrator) do
+    ensure_repo(repo, args)
+    path = ensure_tenant_migrations_path(repo)
+    {:ok, pid, apps} = ensure_started(repo, opts)
+
+    pool = repo.config[:pool]
+    Code.compiler_options(ignore_module_conflict: true)
+    migrated = Enum.flat_map(Triplex.all(repo), fn(tenant) ->
+      opts = Keyword.put(opts, :prefix, tenant)
+
+      if function_exported?(pool, :unboxed_run, 2) do
+        pool.unboxed_run(repo, fn -> migrator.(repo, path, direction, opts) end)
+      else
+        migrator.(repo, path, direction, opts)
+      end
+    end)
+    Code.compiler_options(ignore_module_conflict: false)
+
+    pid && repo.stop()
+    restart_apps_if_migrated(apps, migrated)
   end
 end

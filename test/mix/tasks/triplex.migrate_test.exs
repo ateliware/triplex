@@ -3,42 +3,13 @@ defmodule Mix.Tasks.Triplex.MigrateTest do
   import Mix.Tasks.Triplex.Migrate, only: [run: 2]
 
   @repo Triplex.TestRepo
+  @args ["-r", @repo, "--step=1", "--quiet"]
 
-  setup do
-    Ecto.Adapters.SQL.Sandbox.mode(@repo, :auto)
-    drop_tenants = fn ->
-      Triplex.drop("migrate_test1", @repo)
-      Triplex.drop("migrate_test2", @repo)
-    end
-    drop_tenants.()
-    on_exit drop_tenants
-    :ok
-  end
-
-  test "runs migration for each tenant, with the correct prefix" do
-    Triplex.create_schema("migrate_test1", @repo)
-    Triplex.create_schema("migrate_test2", @repo)
-
-    run(["-r", @repo, "--step=1", "--quiet"], fn(@repo, path, :up, opts) ->
-      assert path == Mix.Triplex.migrations_path(@repo)
-      assert opts[:step] == 1
-      assert opts[:log] == false
-
-      send self(), {:ok, opts[:prefix]}
-
-      []
+  test "runs the migrator function" do
+    run(@args, fn(args, direction) ->
+      assert @args == args
+      assert direction == :up
     end)
-    assert_received {:ok, "migrate_test1"}
-    assert_received {:ok, "migrate_test2"}
-  end
-
-  test "does not run if there are no tenants" do
-    run(["-r", @repo], fn(_, _, _, _) ->
-      send self(), :error
-
-      []
-    end)
-    refute_received :error
   end
 end
 

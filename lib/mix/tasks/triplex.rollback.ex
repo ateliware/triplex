@@ -1,29 +1,7 @@
 defmodule Mix.Tasks.Triplex.Rollback do
   use Mix.Task
-  import Mix.Ecto
-  import Mix.EctoSQL
-  import Mix.Triplex
 
   @shortdoc "Rolls back the repository tenant migrations"
-
-  @aliases [
-    r: :repo,
-    n: :step
-  ]
-
-  @switches [
-    all: :boolean,
-    step: :integer,
-    to: :integer,
-    start: :boolean,
-    quiet: :boolean,
-    prefix: :string,
-    pool_size: :integer,
-    log_sql: :boolean,
-    repo: [:keep, :string],
-    no_compile: :boolean,
-    no_deps_check: :boolean
-  ]
 
   @moduledoc """
   Reverts applied migrations in the given repository.
@@ -83,37 +61,7 @@ defmodule Mix.Tasks.Triplex.Rollback do
   """
 
   @impl true
-  def run(args, migrator \\ &Ecto.Migrator.run/4) do
-    repos = parse_repo(args)
-    {opts, _} = OptionParser.parse! args, strict: @switches, aliases: @aliases
-
-    opts =
-      if opts[:to] || opts[:step] || opts[:all],
-        do: opts,
-        else: Keyword.put(opts, :step, 1)
-
-    opts =
-      if opts[:quiet],
-        do: Keyword.merge(opts, [log: false, log_sql: false]),
-        else: opts
-
-    Enum.each repos, fn repo ->
-      ensure_repo(repo, args)
-      path = ensure_tenant_migrations_path(repo)
-      {:ok, pid, apps} = ensure_started(repo, opts)
-
-      pool = repo.config[:pool]
-      Code.compiler_options(ignore_module_conflict: true)
-
-      migrated =
-        repo
-        |> Triplex.all()
-        |> Enum.flat_map(&run_migrator(&1, pool, migrator, repo, path, :down, opts))
-
-      Code.compiler_options(ignore_module_conflict: false)
-
-      pid && repo.stop()
-      restart_apps_if_migrated(apps, migrated)
-    end
+  def run(args, migrator \\ &Mix.Triplex.run_tenant_migrations/2) do
+    migrator.(args, :down)
   end
 end

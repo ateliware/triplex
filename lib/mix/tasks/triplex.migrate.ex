@@ -108,14 +108,12 @@ defmodule Mix.Tasks.Triplex.Migrate do
 
       pool = repo.config[:pool]
       Code.compiler_options(ignore_module_conflict: true)
-      migrated = Enum.flat_map(Triplex.all(repo), fn(tenant) ->
-        opts = Keyword.put(opts, :prefix, tenant)
-        if function_exported?(pool, :unboxed_run, 2) do
-          pool.unboxed_run(repo, fn -> migrator.(repo, path, :up, opts) end)
-        else
-          migrator.(repo, path, :up, opts)
-        end
-      end)
+
+      migrated =
+        repo
+        |> Triplex.all()
+        |> Enum.flat_map(&run_migrator(&1, pool, migrator, repo, path, :up, opts))
+
       Code.compiler_options(ignore_module_conflict: false)
 
       pid && repo.stop()

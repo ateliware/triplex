@@ -60,4 +60,23 @@ defmodule Mix.Triplex do
     and the configured path exists.
     """
   end
+
+  @doc """
+  Runs the `migrator` function for the given `tenant` on the
+  given `repo`.
+
+  If the `pool` has the `unboxed_run/2` function, it executes the
+  `migrator` function within it, otherwise it runs it directly.
+
+  The `path`, `direction` and `opts` are bypassed to the `migrator`
+  function.
+  """
+  def run_migrator(tenant, pool, migrator, repo, path, direction, opts) do
+    opts = Keyword.put(opts, :prefix, tenant)
+    if function_exported?(pool, :unboxed_run, 2) do
+      pool.unboxed_run(repo, fn -> migrator.(repo, path, direction, opts) end)
+    else
+      migrator.(repo, path, direction, opts)
+    end
+  end
 end

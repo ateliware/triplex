@@ -93,6 +93,40 @@ defmodule Triplex do
   sending `migrate/2` as the `func` callback.
 
   See `migrate/2` for more details about the migration running.
+
+  ### Ecto 3 migrations, triplex and transactions
+
+  So on Ecto 3, migrations were changed to run on async tasks. Because of
+  that it's not possible anymore to run `Triplex.create/2` inside of a
+  transaction anymore.
+
+  But there is a way to achieve the same results using `create_schema/3`
+  and `migrate/2`. Here is an example using transaction:
+
+      Repo.transaction(fn ->
+        {:ok, _} = Triplex.create("tenant")
+        User.insert!(%{name: "Demo user 1"})
+        User.insert!(%{name: "Demo user 2"})
+      end)
+
+  And here is how you could do to achieve the same results no success or fail:
+
+      Triplex.create_schema("tenant", Repo, fn(tenant, repo) ->
+        Repo.transaction(fn ->
+          {:ok, _} = Triplex.migrate(tenant, repo)
+          User.insert!(%{name: "Demo user 1"})
+          User.insert!(%{name: "Demo user 2"})
+
+          # the `create_schema/3` function must return `{:ok, "tenant"}`
+          # if succeeded, and `Repo.transaction` transforms the function results
+          # on this tuple
+          tenant
+        end)
+      end)
+
+  So, if the function given to `create_schema/3` returns an error tuple, it will
+  rollback the created schema and return that tuple to you. Check out
+  `create_schema/3` docs for more details.
   """
   def create(tenant, repo \\ config().repo) do
     create_schema(tenant, repo, &migrate(&1, &2))

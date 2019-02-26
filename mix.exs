@@ -100,7 +100,9 @@ defmodule Triplex.Mixfile do
 
   defp run_coverage(task, args) do
     {_, res} =
-      System.cmd("mix", [task | args],
+      System.cmd(
+        "mix",
+        [task | args],
         into: IO.binstream(:stdio, :line),
         env: [{"MIX_ENV", "test"}]
       )

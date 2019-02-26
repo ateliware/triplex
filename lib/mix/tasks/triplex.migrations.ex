@@ -45,38 +45,42 @@ defmodule Mix.Tasks.Triplex.Migrations do
         {:ok, pid, _} = ensure_started(repo, all: true)
 
         migration_lists = migrations.(repo, Triplex.migrations_path(repo))
-
-        tenant_state =
-          Enum.map_join(Triplex.all(repo), fn tenant ->
-            tenant_versions = Migrator.migrated_versions(repo, prefix: tenant)
-
-            repo_status =
-              Enum.map(migration_lists, fn
-                {_, ts, desc} ->
-                  if Enum.member?(tenant_versions, ts) do
-                    {:up, ts, desc}
-                  else
-                    {:down, ts, desc}
-                  end
-              end)
-
-            """
-
-            Repo: #{inspect(repo)}
-            Tenant: #{tenant}
-
-              Status    Migration ID    Migration Name
-            --------------------------------------------------
-            #{migrations_table(repo_status)}
-            """
-          end)
+        tenants_state = tenants_state(repo, migration_lists)
 
         pid && repo.stop(pid)
 
-        tenant_state
+        tenants_state
       end)
 
     puts.(Enum.join(result, "\n"))
+  end
+
+  defp tenants_state(repo, migration_lists) do
+    Enum.map_join(Triplex.all(repo), fn tenant ->
+      tenant_versions = Migrator.migrated_versions(repo, prefix: tenant)
+      repo_status = repo_status(migration_lists, tenant_versions)
+
+      """
+
+      Repo: #{inspect(repo)}
+      Tenant: #{tenant}
+
+        Status    Migration ID    Migration Name
+      --------------------------------------------------
+      #{migrations_table(repo_status)}
+      """
+    end)
+  end
+
+  defp repo_status(migration_lists, tenant_versions) do
+    Enum.map(migration_lists, fn
+      {_, ts, desc} ->
+        if Enum.member?(tenant_versions, ts) do
+          {:up, ts, desc}
+        else
+          {:down, ts, desc}
+        end
+    end)
   end
 
   defp migrations_table(repo_status) do

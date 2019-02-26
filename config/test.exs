@@ -7,11 +7,19 @@ config :triplex,
   ]
 
 # Configure your database
-config :triplex, ecto_repos: [Triplex.TestRepo]
-config :triplex, Triplex.TestRepo,
+config :triplex, ecto_repos: [Triplex.PGTestRepo, Triplex.MSTestRepo]
+
+config :triplex, Triplex.PGTestRepo,
   username: System.get_env("PG_USERNAME") || "postgres",
   password: System.get_env("PG_PASSWORD") || "postgres",
   hostname: System.get_env("PG_HOST") || "localhost",
+  database: "triplex_test",
+  pool: Ecto.Adapters.SQL.Sandbox
+
+config :triplex, Triplex.MSTestRepo,
+  username: System.get_env("MS_USERNAME") || "root",
+  password: System.get_env("MS_PASSWORD") || "",
+  hostname: System.get_env("MS_HOST") || "localhost",
   database: "triplex_test",
   pool: Ecto.Adapters.SQL.Sandbox
 

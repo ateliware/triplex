@@ -5,6 +5,7 @@ otp_release:
   - '20.0'
 addons:
   postgresql: '9.4'
+  mysql: '5.6'
 
 install:
   - mix local.rebar --force
@@ -14,10 +15,8 @@ install:
 env:
   global:
     - MIX_ENV=test
-    - DATABASE_NAME=travis_ci_test
 
 before_script:
-  - psql -c 'create database travis_ci_test;' -U postgres
   - mix test.reset
 script:
   - mix coveralls.travis

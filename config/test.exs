@@ -3,7 +3,13 @@ use Mix.Config
 # Configure triplex
 config :triplex,
   reserved_tenants: [
-    "www", "api", "admin", "security", "app", "staging", ~r/^db\d+$/
+    "www",
+    "api",
+    "admin",
+    "security",
+    "app",
+    "staging",
+    ~r/^db\d+$/
   ]
 
 # Configure your database

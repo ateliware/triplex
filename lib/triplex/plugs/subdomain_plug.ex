@@ -27,9 +27,13 @@ if Code.ensure_loaded?(Plug) do
     defp get_subdomain(_conn, %SubdomainPlugConfig{endpoint: nil}) do
       nil
     end
-    defp get_subdomain(%Conn{host: host},
-                      %SubdomainPlugConfig{endpoint: endpoint}) do
+
+    defp get_subdomain(
+           %Conn{host: host},
+           %SubdomainPlugConfig{endpoint: endpoint}
+         ) do
       root_host = endpoint.config(:url)[:host]
+
       if host in [root_host, "localhost", "127.0.0.1", "0.0.0.0"] do
         nil
       else

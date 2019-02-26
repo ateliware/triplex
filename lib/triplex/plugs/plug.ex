@@ -31,6 +31,7 @@ if Code.ensure_loaded?(Plug) do
       else
         conn = assign(conn, @raw_tenant_assign, tenant)
         tenant = tenant_handler(tenant, config.tenant_handler)
+
         if Triplex.reserved_tenant?(tenant) do
           conn
         else
@@ -58,11 +59,13 @@ if Code.ensure_loaded?(Plug) do
 
     defp tenant_handler(tenant, nil),
       do: tenant
+
     defp tenant_handler(tenant, handler) when is_function(handler),
       do: handler.(tenant)
 
     defp callback(conn, _, nil),
       do: conn
+
     defp callback(conn, tenant, callback) when is_function(callback),
       do: callback.(conn, tenant)
   end

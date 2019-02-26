@@ -6,12 +6,11 @@ defmodule Triplex.Mixfile do
       app: :triplex,
       version: "1.2.2-dev",
       elixir: "~> 1.6",
-
       description: "Build multitenant applications on top of Ecto.",
       package: package(),
-      elixirc_paths: elixirc_paths(Mix.env),
-      build_embedded: Mix.env == :prod,
-      start_permanent: Mix.env == :prod,
+      elixirc_paths: elixirc_paths(Mix.env()),
+      build_embedded: Mix.env() == :prod,
+      start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: preferred_cli_env(),
@@ -54,7 +53,7 @@ defmodule Triplex.Mixfile do
       {:plug, "~> 1.6", optional: true},
       {:ex_doc, ">= 0.0.0", only: :dev},
       {:inch_ex, ">= 0.0.0", only: :docs},
-      {:excoveralls, "~> 0.10", only: :test},
+      {:excoveralls, "~> 0.10", only: :test}
     ]
   end
 
@@ -65,11 +64,13 @@ defmodule Triplex.Mixfile do
   #
   # See the documentation for `Mix` for more info on aliases.
   defp aliases do
-    ["db.migrate": ["ecto.migrate", "triplex.migrate"],
-    "test": ["ecto.create --quiet", "ecto.migrate", "test"],
-    "test.reset": ["ecto.drop", "ecto.create", "db.migrate"],
-    "test.cover": &run_default_coverage/1,
-    "test.cover.html": &run_html_coverage/1]
+    [
+      "db.migrate": ["ecto.migrate", "triplex.migrate"],
+      test: ["ecto.create --quiet", "ecto.migrate", "test"],
+      "test.reset": ["ecto.drop", "ecto.create", "db.migrate"],
+      "test.cover": &run_default_coverage/1,
+      "test.cover.html": &run_html_coverage/1
+    ]
   end
 
   defp package do
@@ -84,20 +85,25 @@ defmodule Triplex.Mixfile do
   end
 
   defp preferred_cli_env do
-    ["coveralls": :test,
-    "coveralls.travis": :test,
-    "coveralls.detail": :test,
-    "coveralls.post": :test,
-    "coveralls.html": :test,
-    "test.reset": :test]
+    [
+      coveralls: :test,
+      "coveralls.travis": :test,
+      "coveralls.detail": :test,
+      "coveralls.post": :test,
+      "coveralls.html": :test,
+      "test.reset": :test
+    ]
   end
 
   defp run_default_coverage(args), do: run_coverage("coveralls", args)
   defp run_html_coverage(args), do: run_coverage("coveralls.html", args)
+
   defp run_coverage(task, args) do
-    {_, res} = System.cmd "mix", [task | args],
-                          into: IO.binstream(:stdio, :line),
-                          env: [{"MIX_ENV", "test"}]
+    {_, res} =
+      System.cmd("mix", [task | args],
+        into: IO.binstream(:stdio, :line),
+        env: [{"MIX_ENV", "test"}]
+      )
 
     if res > 0 do
       System.at_exit(fn _ -> exit({:shutdown, 1}) end)

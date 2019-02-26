@@ -22,18 +22,26 @@ defmodule Mix.Tasks.Triplex.Mysql.Install do
     no_umbrella!("ecto.gen.migration")
     repos = parse_repo(args)
 
-    Enum.each repos, fn repo ->
+    Enum.each(repos, fn repo ->
       ensure_repo(repo, args)
+
       if repo.__adapter__ != Ecto.Adapters.MySQL do
-        Mix.raise "the tenant table only makes sense for MySQL repositories"
+        Mix.raise("the tenant table only makes sense for MySQL repositories")
       end
 
       path = Path.relative_to(Migrator.migrations_path(repo), Project.app_path())
       file = Path.join(path, "#{timestamp()}_#{@migration_name}.exs")
-      create_directory path
+      create_directory(path)
 
-      create_file file, migration_template(repo: repo, migration_name: @migration_name, tenant_table: Triplex.config().tenant_table)
-    end
+      create_file(
+        file,
+        migration_template(
+          repo: repo,
+          migration_name: @migration_name,
+          tenant_table: Triplex.config().tenant_table
+        )
+      )
+    end)
   end
 
   defp timestamp do
@@ -43,7 +51,7 @@ defmodule Mix.Tasks.Triplex.Mysql.Install do
 
   defp pad(i), do: i |> to_string() |> String.pad_leading(2, "0")
 
-  embed_template :migration, """
+  embed_template(:migration, """
   defmodule <%= Module.concat([@repo, Migrations, camelize(@migration_name)]) %> do
     use Ecto.Migration
 
@@ -54,5 +62,5 @@ defmodule Mix.Tasks.Triplex.Mysql.Install do
       create unique_index(:<%= @tenant_table %>, [:name])
     end
   end
-  """
+  """)
 end

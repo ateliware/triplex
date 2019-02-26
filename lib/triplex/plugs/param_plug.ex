@@ -25,8 +25,10 @@ if Code.ensure_loaded?(Plug) do
 
     defp get_param(conn, %ParamPlugConfig{param: key}),
       do: get_param(conn, key)
+
     defp get_param(conn, key) when is_atom(key),
       do: get_param(conn, Atom.to_string(key))
+
     defp get_param(conn, key),
       do: conn.params[key]
   end

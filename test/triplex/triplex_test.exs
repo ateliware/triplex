@@ -12,14 +12,16 @@ defmodule TriplexTest do
   setup do
     for repo <- @repos do
       Ecto.Adapters.SQL.Sandbox.mode(repo, :auto)
+
       drop_tenants = fn ->
         Triplex.drop("lala", repo)
         Triplex.drop("lili", repo)
         Triplex.drop("lolo", repo)
         Triplex.drop(@tenant, repo)
       end
+
       drop_tenants.()
-      on_exit drop_tenants
+      on_exit(drop_tenants)
     end
 
     :ok
@@ -34,22 +36,25 @@ defmodule TriplexTest do
 
   test "create/2 must return a error if the tenant already exists" do
     assert {:ok, _} = Triplex.create("lala", PGTestRepo)
+
     assert {:error, "ERROR 42P06 (duplicate_schema) schema \"lala\" already exists"} =
-      Triplex.create("lala", PGTestRepo)
+             Triplex.create("lala", PGTestRepo)
 
     assert {:ok, _} = Triplex.create("lala", MSTestRepo)
+
     assert {:error, "(1007): Can't create database 'lala'; database exists"} =
-      Triplex.create("lala", MSTestRepo)
+             Triplex.create("lala", MSTestRepo)
   end
 
   test "create/2 must return a error if the tenant is reserved" do
     for repo <- @repos do
       assert {:error, msg} = Triplex.create("www", repo)
+
       assert msg ==
-        """
-        You cannot create the schema because \"www\" is a reserved
-        tenant
-        """
+               """
+               You cannot create the schema because \"www\" is a reserved
+               tenant
+               """
     end
   end
 
@@ -87,8 +92,9 @@ defmodule TriplexTest do
 
   test "exists?/2 for a reserved tenants returns false" do
     for repo <- @repos do
-      tenants = Enum.filter Triplex.reserved_tenants, &(!Regex.regex?(&1))
+      tenants = Enum.filter(Triplex.reserved_tenants(), &(!Regex.regex?(&1)))
       tenants = ["pg_lol", "pg_cow" | tenants]
+
       for tenant <- tenants do
         refute Triplex.exists?(tenant, repo)
       end
@@ -114,12 +120,12 @@ defmodule TriplexTest do
     for repo <- @repos do
       create_tenant_schema(repo)
 
-      assert_creates_notes_table repo, fn ->
+      assert_creates_notes_table(repo, fn ->
         {status, versions} = Triplex.migrate(@tenant, repo)
 
         assert status == :ok
         assert versions == [@migration_version]
-      end
+      end)
     end
   end
 
@@ -127,11 +133,11 @@ defmodule TriplexTest do
     for repo <- @repos do
       create_and_migrate_tenant(repo)
 
-      force_migration_failure repo, fn(expected_error) ->
+      force_migration_failure(repo, fn expected_error ->
         {status, error_message} = Triplex.migrate(@tenant, repo)
         assert status == :error
         assert error_message == expected_error
-      end
+      end)
     end
   end
 
@@ -149,10 +155,11 @@ defmodule TriplexTest do
   end
 
   defp assert_notes_table_is_dropped(repo) do
-    error = case repo.__adapter__() do
-      Ecto.Adapters.MySQL -> Mariaex.Error
-      Ecto.Adapters.Postgres -> Postgrex.Error
-    end
+    error =
+      case repo.__adapter__() do
+        Ecto.Adapters.MySQL -> Mariaex.Error
+        Ecto.Adapters.Postgres -> Postgrex.Error
+      end
 
     assert_raise error, fn ->
       find_tenant_notes(repo)
@@ -172,32 +179,34 @@ defmodule TriplexTest do
   end
 
   defp find_tenant_notes(repo) do
-    query = Note
-            |> Ecto.Queryable.to_query
-            |> Map.put(:prefix, @tenant)
+    query =
+      Note
+      |> Ecto.Queryable.to_query()
+      |> Map.put(:prefix, @tenant)
+
     repo.all(query)
   end
 
   defp force_migration_failure(repo, migration_function) do
-    sql = case repo.__adapter__ do
-      Ecto.Adapters.MySQL -> """
-      DELETE FROM #{@tenant}.schema_migrations
-      """
-      _ -> """
-      DELETE FROM "#{@tenant}"."schema_migrations"
-      """
-    end
-    {:ok, _ } = Ecto.Adapters.SQL.query(repo, sql, [])
+    sql =
+      case repo.__adapter__ do
+        Ecto.Adapters.MySQL ->
+          """
+          DELETE FROM #{@tenant}.schema_migrations
+          """
+
+        _ ->
+          """
+          DELETE FROM "#{@tenant}"."schema_migrations"
+          """
+      end
+
+    {:ok, _} = Ecto.Adapters.SQL.query(repo, sql, [])
 
     if repo.__adapter__ == Ecto.Adapters.MySQL do
-      migration_function.(
-        "(1050): Table 'notes' already exists"
-      )
+      migration_function.("(1050): Table 'notes' already exists")
     else
-      migration_function.(
-        "ERROR 42P07 (duplicate_table) relation \"notes\" already exists"
-      )
+      migration_function.("ERROR 42P07 (duplicate_table) relation \"notes\" already exists")
     end
   end
 end
-

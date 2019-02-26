@@ -38,50 +38,56 @@ defmodule Mix.Tasks.Triplex.Migrations do
   def run(args, migrations \\ &Migrator.migrations/2, puts \\ &IO.puts/1) do
     repos = parse_repo(args)
 
-    result = Enum.map(repos, fn repo ->
-      ensure_repo(repo, args)
-      ensure_tenant_migrations_path(repo)
-      {:ok, pid, _} = ensure_started(repo, all: true)
+    result =
+      Enum.map(repos, fn repo ->
+        ensure_repo(repo, args)
+        ensure_tenant_migrations_path(repo)
+        {:ok, pid, _} = ensure_started(repo, all: true)
 
-      migration_lists = migrations.(repo, Triplex.migrations_path(repo))
-      tenant_state = Enum.map_join(Triplex.all(repo), fn tenant ->
+        migration_lists = migrations.(repo, Triplex.migrations_path(repo))
 
-        tenant_versions = Migrator.migrated_versions(repo, prefix: tenant)
-        repo_status = Enum.map migration_lists, fn
-          {_, ts, desc} ->
-          if Enum.member? tenant_versions, ts do
-            {:up, ts, desc}
-          else
-            {:down, ts, desc}
-          end
-        end
-        """
+        tenant_state =
+          Enum.map_join(Triplex.all(repo), fn tenant ->
+            tenant_versions = Migrator.migrated_versions(repo, prefix: tenant)
 
-        Repo: #{inspect repo}
-        Tenant: #{tenant}
+            repo_status =
+              Enum.map(migration_lists, fn
+                {_, ts, desc} ->
+                  if Enum.member?(tenant_versions, ts) do
+                    {:up, ts, desc}
+                  else
+                    {:down, ts, desc}
+                  end
+              end)
 
-          Status    Migration ID    Migration Name
-        --------------------------------------------------
-        #{migrations_table(repo_status)}
-        """
+            """
+
+            Repo: #{inspect(repo)}
+            Tenant: #{tenant}
+
+              Status    Migration ID    Migration Name
+            --------------------------------------------------
+            #{migrations_table(repo_status)}
+            """
+          end)
+
+        pid && repo.stop(pid)
+
+        tenant_state
       end)
-      pid && repo.stop(pid)
-
-      tenant_state
-    end)
 
     puts.(Enum.join(result, "\n"))
   end
 
   defp migrations_table(repo_status) do
-    Enum.map_join repo_status, "\n", fn({status, number, description}) ->
+    Enum.map_join(repo_status, "\n", fn {status, number, description} ->
       status =
         case status do
-          :up   -> "up  "
+          :up -> "up  "
           :down -> "down"
         end
 
       "  #{status}      #{number}  #{description}"
-    end
+    end)
   end
 end

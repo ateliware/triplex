@@ -47,7 +47,7 @@ defmodule Mix.Triplex do
   def ensure_tenant_migrations_path(repo) do
     path = Path.join(source_repo_priv(repo), config().migrations_path)
 
-    if not Mix.Project.umbrella? and not File.dir?(path) do
+    if not Mix.Project.umbrella?() and not File.dir?(path) do
       raise_missing_migrations(Path.relative_to_cwd(path), repo)
     end
 
@@ -55,9 +55,9 @@ defmodule Mix.Triplex do
   end
 
   defp raise_missing_migrations(path, repo) do
-    Mix.raise """
-    Could not find migrations directory #{inspect path}
-    for repo #{inspect repo}.
+    Mix.raise("""
+    Could not find migrations directory #{inspect(path)}
+    for repo #{inspect(repo)}.
 
     This may be because you are in a new project and the
     migration directory has not been created yet. Creating an
@@ -66,7 +66,7 @@ defmodule Mix.Triplex do
     If you expected existing migrations to be found, please
     make sure your repository has been properly configured
     and the configured path exists.
-    """
+    """)
   end
 
   @doc """
@@ -75,7 +75,7 @@ defmodule Mix.Triplex do
   """
   def run_tenant_migrations(args, direction, migrator \\ &Ecto.Migrator.run/4) do
     repos = parse_repo(args)
-    {opts, _} = OptionParser.parse! args, strict: @switches, aliases: @aliases
+    {opts, _} = OptionParser.parse!(args, strict: @switches, aliases: @aliases)
 
     opts =
       if opts[:to] || opts[:step] || opts[:all],
@@ -84,10 +84,10 @@ defmodule Mix.Triplex do
 
     opts =
       if opts[:quiet],
-        do: Keyword.merge(opts, [log: false, log_sql: false]),
+        do: Keyword.merge(opts, log: false, log_sql: false),
         else: opts
 
-    Enum.each repos, &run_tenant_migrations(&1, args, opts, direction, migrator)
+    Enum.each(repos, &run_tenant_migrations(&1, args, opts, direction, migrator))
   end
 
   defp run_tenant_migrations(repo, args, opts, direction, migrator) do
@@ -97,15 +97,18 @@ defmodule Mix.Triplex do
 
     pool = repo.config[:pool]
     Code.compiler_options(ignore_module_conflict: true)
-    migrated = Enum.flat_map(Triplex.all(repo), fn(tenant) ->
-      opts = Keyword.put(opts, :prefix, tenant)
 
-      if function_exported?(pool, :unboxed_run, 2) do
-        pool.unboxed_run(repo, fn -> migrator.(repo, path, direction, opts) end)
-      else
-        migrator.(repo, path, direction, opts)
-      end
-    end)
+    migrated =
+      Enum.flat_map(Triplex.all(repo), fn tenant ->
+        opts = Keyword.put(opts, :prefix, tenant)
+
+        if function_exported?(pool, :unboxed_run, 2) do
+          pool.unboxed_run(repo, fn -> migrator.(repo, path, direction, opts) end)
+        else
+          migrator.(repo, path, direction, opts)
+        end
+      end)
+
     Code.compiler_options(ignore_module_conflict: false)
 
     pid && repo.stop()

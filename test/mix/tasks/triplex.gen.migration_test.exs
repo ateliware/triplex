@@ -22,33 +22,36 @@ defmodule Mix.Tasks.Triplex.Gen.MigrationTest do
     File.rm_rf!(unquote(tmp_path))
 
     Mix.shell(Mix.Shell.Process)
-    on_exit fn ->
+
+    on_exit(fn ->
       Mix.shell(Mix.Shell.IO)
-    end
+    end)
 
     :ok
   end
 
   test "generates a new migration" do
-    run ["-r", to_string(Repo), "test"]
+    run(["-r", to_string(Repo), "test"])
     assert [name] = File.ls!(@migrations_path)
-    assert String.match? name, ~r/^\d{14}_test\.exs$/
-    assert_file Path.join(@migrations_path, name), fn file ->
+    assert String.match?(name, ~r/^\d{14}_test\.exs$/)
+
+    assert_file(Path.join(@migrations_path, name), fn file ->
       assert file =~ """
-      defmodule Mix.Tasks.Triplex.Gen.MigrationTest.Repo.Migrations.Test do
-      """
+             defmodule Mix.Tasks.Triplex.Gen.MigrationTest.Repo.Migrations.Test do
+             """
+
       assert file =~ "use Ecto.Migration"
       assert file =~ "def change do"
-    end
+    end)
   end
 
   test "underscores the filename when generating a migration" do
-    run ["-r", to_string(Repo), "MyMigration"]
+    run(["-r", to_string(Repo), "MyMigration"])
     assert [name] = File.ls!(@migrations_path)
-    assert String.match? name, ~r/^\d{14}_my_migration\.exs$/
+    assert String.match?(name, ~r/^\d{14}_my_migration\.exs$/)
   end
 
   test "raises when missing file" do
-    assert_raise Mix.Error, fn -> run ["-r", to_string(Repo)] end
+    assert_raise Mix.Error, fn -> run(["-r", to_string(Repo)]) end
   end
 end

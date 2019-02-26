@@ -31,33 +31,37 @@ defmodule Mix.Tasks.Triplex.Mysql.InstallTest do
     File.rm_rf!(unquote(tmp_path))
 
     Mix.shell(Mix.Shell.Process)
-    on_exit fn ->
+
+    on_exit(fn ->
       Mix.shell(Mix.Shell.IO)
-    end
+    end)
 
     :ok
   end
 
   test "generates a migration to install mysql" do
-    run ["-r", to_string(MySQLRepo)]
+    run(["-r", to_string(MySQLRepo)])
     assert [name] = File.ls!(@migrations_path)
-    assert String.match? name, ~r/^\d{14}_create_tenant\.exs$/
-    assert_file Path.join(@migrations_path, name), fn file ->
+    assert String.match?(name, ~r/^\d{14}_create_tenant\.exs$/)
+
+    assert_file(Path.join(@migrations_path, name), fn file ->
       assert file =~ """
-      defmodule Elixir.Mix.Tasks.Triplex.Mysql.InstallTest.MySQLRepo.Migrations.CreateTenant do
-      """
+             defmodule Elixir.Mix.Tasks.Triplex.Mysql.InstallTest.MySQLRepo.Migrations.CreateTenant do
+             """
+
       assert file =~ "use Ecto.Migration"
       assert file =~ "def change do"
       assert file =~ "create table(:tenants) do"
       assert file =~ "add :name, :string"
       assert file =~ "create unique_index(:tenants, [:name])"
-    end
+    end)
   end
 
   test "raises an exception for non mysql repos" do
     msg = "the tenant table only makes sense for MySQL repositories"
+
     assert_raise Mix.Error, msg, fn ->
-      run ["-r", to_string(PGRepo)]
+      run(["-r", to_string(PGRepo)])
     end
   end
 end

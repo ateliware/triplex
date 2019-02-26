@@ -45,23 +45,33 @@ defmodule Mix.Tasks.Triplex.Gen.Migration do
     no_umbrella!("ecto.gen.migration")
     repos = parse_repo(args)
 
-    Enum.each repos, fn repo ->
+    Enum.each(repos, fn repo ->
       case OptionParser.parse(args, switches: @switches) do
         {opts, [name], _} ->
           ensure_repo(repo, args)
-          path = Path.relative_to(Triplex.migrations_path(repo),
-                                  Project.app_path)
-          file = Path.join(path, "#{timestamp()}_#{underscore(name)}.exs")
-          create_directory path
 
-          assigns = [mod: Module.concat([repo, Migrations, camelize(name)]),
-                     change: opts[:change]]
-          create_file file, migration_template(assigns)
+          path =
+            repo
+            |> Triplex.migrations_path()
+            |> Path.relative_to(Project.app_path())
+
+          file = Path.join(path, "#{timestamp()}_#{underscore(name)}.exs")
+          create_directory(path)
+
+          assigns = [
+            mod: Module.concat([repo, Migrations, camelize(name)]),
+            change: opts[:change]
+          ]
+
+          create_file(file, migration_template(assigns))
+
         {_, _, _} ->
-          Mix.raise "expected ecto.gen.migration to receive the migration " <>
-            "file name, got: #{inspect Enum.join(args, " ")}"
+          Mix.raise(
+            "expected ecto.gen.migration to receive the migration " <>
+              "file name, got: #{inspect(Enum.join(args, " "))}"
+          )
       end
-    end
+    end)
   end
 
   defp timestamp do
@@ -71,7 +81,7 @@ defmodule Mix.Tasks.Triplex.Gen.Migration do
 
   defp pad(i), do: i |> to_string() |> String.pad_leading(2, "0")
 
-  embed_template :migration, """
+  embed_template(:migration, """
   defmodule <%= inspect @mod %> do
     use Ecto.Migration
 
@@ -79,5 +89,5 @@ defmodule Mix.Tasks.Triplex.Gen.Migration do
   <%= @change %>
     end
   end
-  """
+  """)
 end

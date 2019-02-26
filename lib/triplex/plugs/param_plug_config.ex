@@ -12,5 +12,3 @@ defmodule Triplex.ParamPlugConfig do
 
   defstruct [:tenant_handler, assign: :current_tenant, param: "tenant"]
 end
-
-

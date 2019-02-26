@@ -13,5 +13,3 @@ defmodule Triplex.EnsurePlugConfig do
 
   defstruct [:callback, :failure_callback, assign: :current_tenant]
 end
-
-

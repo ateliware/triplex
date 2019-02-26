@@ -8,11 +8,13 @@ defmodule Mix.Tasks.Triplex.MigrationsTest do
   setup do
     for repo <- @repos do
       Ecto.Adapters.SQL.Sandbox.mode(repo, :auto)
+
       drop_tenants = fn ->
         Triplex.drop("migrations_test", repo)
       end
+
       drop_tenants.()
-      on_exit drop_tenants
+      on_exit(drop_tenants)
     end
 
     :ok
@@ -22,20 +24,20 @@ defmodule Mix.Tasks.Triplex.MigrationsTest do
     for repo <- @repos do
       Triplex.create_schema("migrations_test", repo)
 
-      run(["-r", repo], &Migrator.migrations/2, fn(msg) ->
-        assert msg =~ Enum.map_join(Triplex.all(repo), fn tenant ->
-          """
+      run(["-r", repo], &Migrator.migrations/2, fn msg ->
+        assert msg =~
+                 Enum.map_join(Triplex.all(repo), fn tenant ->
+                   """
 
-          Repo: #{inspect(repo)}
-          Tenant: #{tenant}
+                   Repo: #{inspect(repo)}
+                   Tenant: #{tenant}
 
-            Status    Migration ID    Migration Name
-          --------------------------------------------------
-            down      20160711125401  test_create_tenant_notes
-          """
-        end)
+                     Status    Migration ID    Migration Name
+                   --------------------------------------------------
+                     down      20160711125401  test_create_tenant_notes
+                   """
+                 end)
       end)
     end
   end
 end
-

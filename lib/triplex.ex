@@ -121,23 +121,26 @@ defmodule Triplex do
           Ecto.Adapters.Postgres -> "CREATE SCHEMA \"#{to_prefix(tenant)}\""
         end
 
-      with {:ok, _} <- SQL.query(repo, sql, []),
-           {:ok, _} <- add_to_tenants_table(tenant, repo) do
-        case exec_func(func, tenant, repo) do
-          {:ok, _} ->
+      case SQL.query(repo, sql, []) do
+        {:ok, _} ->
+          with {:ok, _} <- add_to_tenants_table(tenant, repo),
+               {:ok, _} <- exec_func(func, tenant, repo) do
             {:ok, tenant}
+          else
+            {:error, reason} ->
+              drop(tenant, repo)
+              {:error, error_message(reason)}
+          end
 
-          {:error, reason} ->
-            drop(tenant, repo)
-            {:error, reason}
-        end
-      else
-        {:error, %PGError{} = e} -> {:error, PGError.message(e)}
-        {:error, %MXError{} = e} -> {:error, MXError.message(e)}
-        {:error, msg} -> {:error, msg}
+        {:error, reason} ->
+          {:error, error_message(reason)}
       end
     end
   end
+
+  defp error_message(%PGError{} = e), do: PGError.message(e)
+  defp error_message(%MXError{} = e), do: MXError.message(e)
+  defp error_message(msg), do: msg
 
   defp add_to_tenants_table(tenant, repo) do
     case repo.__adapter__ do

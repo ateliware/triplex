@@ -65,8 +65,10 @@ defmodule Mix.Tasks.Triplex.Rollback do
   not work, please compare them and try to stay as close to it as possible.
   """
 
+  alias Mix.Triplex
+
   @impl true
-  def run(args, migrator \\ &Mix.Triplex.run_tenant_migrations/2) do
+  def run(args, migrator \\ &Triplex.run_tenant_migrations/2) do
     migrator.(args, :down)
   end
 end

@@ -4,7 +4,7 @@ defmodule Triplex.Mixfile do
   def project do
     [
       app: :triplex,
-      version: "1.2.2-dev",
+      version: "1.3.0-dev",
       elixir: "~> 1.6",
       description: "Build multitenant applications on top of Ecto.",
       package: package(),
@@ -15,7 +15,7 @@ defmodule Triplex.Mixfile do
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: preferred_cli_env(),
       deps: deps(),
-      docs: [main: "readme", extras: ["README.md"]],
+      docs: [main: "readme", extras: ["README.md", "CHANGELOG.md"]],
       name: "Triplex",
       source_url: "https://github.com/ateliware/triplex"
     ]
@@ -47,13 +47,14 @@ defmodule Triplex.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [
+      {:credo, "~> 0.8.10", only: [:test, :dev], optional: true, runtime: false},
       {:ecto_sql, "~> 3.0"},
-      {:postgrex, ">= 0.14.0", optional: true},
+      {:ex_doc, ">= 0.0.0", only: :dev},
+      {:excoveralls, "~> 0.10", only: :test},
+      {:inch_ex, ">= 0.0.0", only: :docs},
       {:mariaex, "~> 0.9.0", optional: true},
       {:plug, "~> 1.6", optional: true},
-      {:ex_doc, ">= 0.0.0", only: :dev},
-      {:inch_ex, ">= 0.0.0", only: :docs},
-      {:excoveralls, "~> 0.10", only: :test}
+      {:postgrex, ">= 0.14.0", optional: true}
     ]
   end
 

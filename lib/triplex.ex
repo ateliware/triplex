@@ -109,7 +109,7 @@ defmodule Triplex do
         User.insert!(%{name: "Demo user 2"})
       end)
 
-  And here is how you could do to achieve the same results no success or fail:
+  And here is how you could achieve the same results on success or fail:
 
       Triplex.create_schema("tenant", Repo, fn(tenant, repo) ->
         Repo.transaction(fn ->

@@ -11,7 +11,8 @@ defmodule Mix.Tasks.Triplex.MigrationsTest do
       Ecto.Adapters.SQL.Sandbox.mode(repo, :auto)
 
       drop_tenants = fn ->
-        Triplex.drop("migrations_test", repo)
+        Triplex.drop("migrations_test_down", repo)
+        Triplex.drop("migrations_test_up", repo)
       end
 
       drop_tenants.()
@@ -23,21 +24,29 @@ defmodule Mix.Tasks.Triplex.MigrationsTest do
 
   test "runs migration for each tenant, with the correct prefix" do
     for repo <- @repos do
-      Triplex.create_schema("migrations_test", repo)
+      Triplex.create_schema("migrations_test_down", repo)
+      Triplex.create("migrations_test_up", repo)
 
       Migrations.run(["-r", repo], &Migrator.migrations/2, fn msg ->
         assert msg =~
-                 Enum.map_join(Triplex.all(repo), fn tenant ->
-                   """
+                 """
+                 Repo: #{inspect(repo)}
+                 Tenant: migrations_test_down
 
-                   Repo: #{inspect(repo)}
-                   Tenant: #{tenant}
+                   Status    Migration ID    Migration Name
+                 --------------------------------------------------
+                   down      20160711125401  test_create_tenant_notes
+                 """
 
-                     Status    Migration ID    Migration Name
-                   --------------------------------------------------
-                     down      20160711125401  test_create_tenant_notes
-                   """
-                 end)
+        assert msg =~
+                 """
+                 Repo: #{inspect(repo)}
+                 Tenant: migrations_test_up
+
+                   Status    Migration ID    Migration Name
+                 --------------------------------------------------
+                   up        20160711125401  test_create_tenant_notes
+                 """
       end)
     end
   end

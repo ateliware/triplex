@@ -13,11 +13,12 @@ if Code.ensure_loaded?(Plug) do
     """
 
     alias Triplex.EnsurePlugConfig
+    alias Triplex.Plug
 
     @doc false
     def init(opts), do: struct(EnsurePlugConfig, opts)
 
     @doc false
-    def call(conn, config), do: Triplex.Plug.ensure_tenant(conn, config)
+    def call(conn, config), do: Plug.ensure_tenant(conn, config)
   end
 end

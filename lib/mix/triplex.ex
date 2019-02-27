@@ -14,6 +14,13 @@ defmodule Mix.Triplex do
   rolls back the repository tenant migrations
   """
 
+  alias Ecto.Migrator
+
+  alias Logger.App
+
+  alias Mix.Ecto
+  alias Mix.Project
+
   @aliases [
     r: :repo,
     n: :step
@@ -43,7 +50,7 @@ defmodule Mix.Triplex do
   def ensure_tenant_migrations_path(repo) do
     path = Path.join(source_repo_priv(repo), Triplex.config().migrations_path)
 
-    if not Mix.Project.umbrella?() and not File.dir?(path) do
+    if not Project.umbrella?() and not File.dir?(path) do
       raise_missing_migrations(Path.relative_to_cwd(path), repo)
     end
 
@@ -69,8 +76,8 @@ defmodule Mix.Triplex do
   Runs the tenant migrations with the given `args` and using
   `migrator` function.
   """
-  def run_tenant_migrations(args, direction, migrator \\ &Ecto.Migrator.run/4) do
-    repos = Mix.Ecto.parse_repo(args)
+  def run_tenant_migrations(args, direction, migrator \\ &Migrator.run/4) do
+    repos = Ecto.parse_repo(args)
     {opts, _} = OptionParser.parse!(args, strict: @switches, aliases: @aliases)
 
     opts =
@@ -87,7 +94,7 @@ defmodule Mix.Triplex do
   end
 
   defp run_tenant_migrations(repo, args, opts, direction, migrator) do
-    Mix.Ecto.ensure_repo(repo, args)
+    Ecto.ensure_repo(repo, args)
     path = ensure_tenant_migrations_path(repo)
     {:ok, pid, apps} = ensure_started(repo, opts)
 
@@ -118,7 +125,7 @@ defmodule Mix.Triplex do
     config = repo.config()
     priv = config[:priv] || "priv/#{repo |> Module.split() |> List.last() |> Macro.underscore()}"
     app = Keyword.fetch!(config, :otp_app)
-    Path.join(Mix.Project.deps_paths()[app] || File.cwd!(), priv)
+    Path.join(Project.deps_paths()[app] || File.cwd!(), priv)
   end
 
   @doc """
@@ -134,9 +141,9 @@ defmodule Mix.Triplex do
       backends = Application.get_env(:logger, :backends, [])
 
       try do
-        Logger.App.stop()
+        App.stop()
         Application.put_env(:logger, :backends, [:console])
-        :ok = Logger.App.start()
+        :ok = App.start()
       after
         Application.put_env(:logger, :backends, backends)
       end

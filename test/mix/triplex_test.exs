@@ -3,6 +3,21 @@ defmodule Mix.TriplexTest do
 
   @repos [Triplex.PGTestRepo, Triplex.MSTestRepo]
 
+  defmodule Repo do
+    def start_link(opts) do
+      assert opts[:pool_size] == 2
+      Process.get(:start_link)
+    end
+
+    def __adapter__ do
+      Triplex.TestAdapter
+    end
+
+    def config do
+      [priv: Process.get(:priv), otp_app: :triplex]
+    end
+  end
+
   defmodule LostRepo do
     def config do
       [priv: "where", otp_app: :triplex]
@@ -82,5 +97,36 @@ defmodule Mix.TriplexTest do
 
       refute_received :error
     end
+  end
+
+  test "ensure_started" do
+    Application.stop(:ecto_sql)
+    Logger.remove_backend(:console)
+    refute :ecto_sql in Enum.map(Application.started_applications(), &elem(&1, 0))
+
+    Process.put(:start_link, {:ok, self()})
+    assert Mix.Triplex.ensure_started(Repo, []) == {:ok, self(), []}
+    assert :ecto_sql in Enum.map(Application.started_applications(), &elem(&1, 0))
+
+    Process.put(:start_link, {:error, {:already_started, self()}})
+    assert Mix.Triplex.ensure_started(Repo, []) == {:ok, nil, []}
+
+    Process.put(:start_link, {:error, self()})
+    assert_raise Mix.Error, fn -> Mix.Triplex.ensure_started(Repo, []) end
+  end
+
+  test "source_priv_repo" do
+    Process.put(:priv, nil)
+    assert Mix.Triplex.source_repo_priv(Repo) == Path.expand("priv/repo", File.cwd!())
+    Process.put(:priv, "hello")
+    assert Mix.Triplex.source_repo_priv(Repo) == Path.expand("hello", File.cwd!())
+  end
+
+  test "restart_apps_if_migrated" do
+    assert Mix.Triplex.restart_apps_if_migrated([:triplex], []) == :ok
+    assert :triplex in Enum.map(Application.started_applications(), &elem(&1, 0))
+
+    assert Mix.Triplex.restart_apps_if_migrated([:triplex], [1]) == :ok
+    assert :triplex in Enum.map(Application.started_applications(), &elem(&1, 0))
   end
 end

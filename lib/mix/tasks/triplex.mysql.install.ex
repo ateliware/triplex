@@ -1,30 +1,32 @@
 defmodule Mix.Tasks.Triplex.Mysql.Install do
-  use Mix.Task
-
-  require Mix.Generator
-
-  alias Mix.Project
-  alias Ecto.Migrator
-  alias Mix.Generator
-
-  @migration_name "create_tenant"
-
-  @shortdoc "Generates a migration for the tenant table in the default database"
-
   @moduledoc """
   Generates a migration to create the tenant table
   in the default database (MySQL only).
   """
 
+  use Mix.Task
+
+  require Mix.Generator
+
+  alias Ecto.Migrator
+  alias Ecto.Adapters.MySQL
+  alias Mix.Ecto
+  alias Mix.Generator
+  alias Mix.Project
+
+  @migration_name "create_tenant"
+
+  @shortdoc "Generates a migration for the tenant table in the default database"
+
   @doc false
   def run(args) do
-    Mix.Ecto.no_umbrella!("ecto.gen.migration")
-    repos = Mix.Ecto.parse_repo(args)
+    Ecto.no_umbrella!("ecto.gen.migration")
+    repos = Ecto.parse_repo(args)
 
     Enum.each(repos, fn repo ->
-      Mix.Ecto.ensure_repo(repo, args)
+      Ecto.ensure_repo(repo, args)
 
-      if repo.__adapter__ != Ecto.Adapters.MySQL do
+      if repo.__adapter__ != MySQL do
         Mix.raise("the tenant table only makes sense for MySQL repositories")
       end
 

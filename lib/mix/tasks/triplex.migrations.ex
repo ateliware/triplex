@@ -3,6 +3,9 @@ defmodule Mix.Tasks.Triplex.Migrations do
 
   alias Ecto.Migrator
 
+  alias Mix.Ecto
+  alias Mix.Triplex, as: MTriplex
+
   @shortdoc "Displays the repository migration status"
   @recursive true
 
@@ -33,13 +36,13 @@ defmodule Mix.Tasks.Triplex.Migrations do
 
   @doc false
   def run(args, migrations \\ &Migrator.migrations/2, puts \\ &IO.puts/1) do
-    repos = Mix.Ecto.parse_repo(args)
+    repos = Ecto.parse_repo(args)
 
     result =
       Enum.map(repos, fn repo ->
-        Mix.Ecto.ensure_repo(repo, args)
-        Mix.Triplex.ensure_tenant_migrations_path(repo)
-        {:ok, pid, _} = Mix.Triplex.ensure_started(repo, all: true)
+        Ecto.ensure_repo(repo, args)
+        MTriplex.ensure_tenant_migrations_path(repo)
+        {:ok, pid, _} = MTriplex.ensure_started(repo, all: true)
 
         migration_lists = migrations.(repo, Triplex.migrations_path(repo))
         tenants_state = tenants_state(repo, migration_lists)

@@ -37,17 +37,19 @@ defmodule Mix.Tasks.Triplex.Gen.Migration do
   does not work, please compare them and try to stay as close to it as possible.
   """
 
+  alias Mix.Ecto
+
   @switches [change: :string]
 
   @doc false
   def run(args) do
-    Mix.Ecto.no_umbrella!("ecto.gen.migration")
-    repos = Mix.Ecto.parse_repo(args)
+    Ecto.no_umbrella!("ecto.gen.migration")
+    repos = Ecto.parse_repo(args)
 
     Enum.each(repos, fn repo ->
       case OptionParser.parse(args, switches: @switches) do
         {opts, [name], _} ->
-          Mix.Ecto.ensure_repo(repo, args)
+          Ecto.ensure_repo(repo, args)
 
           path =
             repo

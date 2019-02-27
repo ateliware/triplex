@@ -58,6 +58,19 @@ defmodule TriplexTest do
     end
   end
 
+  test "create_schema/3 must rollback the tenant creation when function fails" do
+    for repo <- @repos do
+      result = {:error, "message"}
+
+      assert Triplex.create_schema("lala", repo, fn "lala", ^repo ->
+               assert Triplex.exists?("lala", repo)
+               result
+             end) == result
+
+      refute Triplex.exists?("lala", repo)
+    end
+  end
+
   test "drop/2 must drop a existent tenant" do
     for repo <- @repos do
       Triplex.create("lala", repo)

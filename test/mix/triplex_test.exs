@@ -1,8 +1,6 @@
 defmodule Mix.TriplexTest do
   use ExUnit.Case, async: true
 
-  import Mix.Triplex
-
   @repos [Triplex.PGTestRepo, Triplex.MSTestRepo]
 
   defmodule LostRepo do
@@ -42,13 +40,13 @@ defmodule Mix.TriplexTest do
     """
 
     assert_raise Mix.Error, msg, fn ->
-      ensure_tenant_migrations_path(LostRepo)
+      Mix.Triplex.ensure_tenant_migrations_path(LostRepo)
     end
 
     for repo <- @repos do
       folder = repo |> Module.split() |> List.last() |> Macro.underscore()
 
-      assert ensure_tenant_migrations_path(repo) ==
+      assert Mix.Triplex.ensure_tenant_migrations_path(repo) ==
                Path.expand("priv/#{folder}/tenant_migrations")
     end
   end
@@ -60,7 +58,7 @@ defmodule Mix.TriplexTest do
 
       args = ["-r", repo, "--step=1", "--quiet"]
 
-      run_tenant_migrations(args, :down, fn ^repo, _, :down, opts ->
+      Mix.Triplex.run_tenant_migrations(args, :down, fn ^repo, _, :down, opts ->
         assert opts[:step] == 1
         assert opts[:log] == false
 
@@ -76,7 +74,7 @@ defmodule Mix.TriplexTest do
 
   test "does not run if there are no tenants" do
     for repo <- @repos do
-      run_tenant_migrations(["-r", repo], :down, fn _, _, _, _ ->
+      Mix.Triplex.run_tenant_migrations(["-r", repo], :down, fn _, _, _, _ ->
         send(self(), :error)
 
         []

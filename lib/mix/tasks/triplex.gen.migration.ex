@@ -1,11 +1,10 @@
 defmodule Mix.Tasks.Triplex.Gen.Migration do
   use Mix.Task
 
-  import Macro, only: [camelize: 1, underscore: 1]
-  import Mix.Generator
-  import Mix.Ecto
+  require Mix.Generator
 
   alias Mix.Project
+  alias Mix.Generator
 
   @shortdoc "Generates a new tenant migration for the repo"
 
@@ -42,28 +41,28 @@ defmodule Mix.Tasks.Triplex.Gen.Migration do
 
   @doc false
   def run(args) do
-    no_umbrella!("ecto.gen.migration")
-    repos = parse_repo(args)
+    Mix.Ecto.no_umbrella!("ecto.gen.migration")
+    repos = Mix.Ecto.parse_repo(args)
 
     Enum.each(repos, fn repo ->
       case OptionParser.parse(args, switches: @switches) do
         {opts, [name], _} ->
-          ensure_repo(repo, args)
+          Mix.Ecto.ensure_repo(repo, args)
 
           path =
             repo
             |> Triplex.migrations_path()
             |> Path.relative_to(Project.app_path())
 
-          file = Path.join(path, "#{timestamp()}_#{underscore(name)}.exs")
-          create_directory(path)
+          file = Path.join(path, "#{timestamp()}_#{Macro.underscore(name)}.exs")
+          Generator.create_directory(path)
 
           assigns = [
-            mod: Module.concat([repo, Migrations, camelize(name)]),
+            mod: Module.concat([repo, Migrations, Macro.camelize(name)]),
             change: opts[:change]
           ]
 
-          create_file(file, migration_template(assigns))
+          Generator.create_file(file, migration_template(assigns))
 
         {_, _, _} ->
           Mix.raise(
@@ -81,7 +80,7 @@ defmodule Mix.Tasks.Triplex.Gen.Migration do
 
   defp pad(i), do: i |> to_string() |> String.pad_leading(2, "0")
 
-  embed_template(:migration, """
+  Generator.embed_template(:migration, """
   defmodule <%= inspect @mod %> do
     use Ecto.Migration
 

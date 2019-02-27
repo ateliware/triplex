@@ -12,13 +12,12 @@ if Code.ensure_loaded?(Plug) do
     See `Triplex.EnsurePlugConfig` to check all the allowed `config` flags.
     """
 
-    import Triplex.Plug
     alias Triplex.EnsurePlugConfig
 
     @doc false
     def init(opts), do: struct(EnsurePlugConfig, opts)
 
     @doc false
-    def call(conn, config), do: ensure_tenant(conn, config)
+    def call(conn, config), do: Triplex.Plug.ensure_tenant(conn, config)
   end
 end

@@ -11,8 +11,6 @@ if Code.ensure_loaded?(Plug) do
     - `Triplex.EnsurePlug` - ensures the current tenant is loaded and halts if not
     """
 
-    import Plug.Conn
-
     @raw_tenant_assign :raw_current_tenant
 
     @doc """
@@ -29,13 +27,13 @@ if Code.ensure_loaded?(Plug) do
       if conn.assigns[config.assign] do
         conn
       else
-        conn = assign(conn, @raw_tenant_assign, tenant)
+        conn = Plug.Conn.assign(conn, @raw_tenant_assign, tenant)
         tenant = tenant_handler(tenant, config.tenant_handler)
 
         if Triplex.reserved_tenant?(tenant) do
           conn
         else
-          assign(conn, config.assign, tenant)
+          Plug.Conn.assign(conn, config.assign, tenant)
         end
       end
     end
@@ -53,7 +51,7 @@ if Code.ensure_loaded?(Plug) do
       else
         conn
         |> callback(conn.assigns[@raw_tenant_assign], config.failure_callback)
-        |> halt()
+        |> Plug.Conn.halt()
       end
     end
 

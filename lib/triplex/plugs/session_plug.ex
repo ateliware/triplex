@@ -13,15 +13,14 @@ if Code.ensure_loaded?(Plug) do
     See `Triplex.SessionPlugConfig` to check all the allowed `config` flags.
     """
 
-    import Triplex.Plug
-    import Plug.Conn
     alias Triplex.SessionPlugConfig
 
     @doc false
     def init(opts), do: struct(SessionPlugConfig, opts)
 
     @doc false
-    def call(conn, config),
-      do: put_tenant(conn, get_session(conn, config.session), config)
+    def call(conn, config) do
+      Triplex.Plug.put_tenant(conn, Plug.Conn.get_session(conn, config.session), config)
+    end
   end
 end

@@ -13,15 +13,13 @@ if Code.ensure_loaded?(Plug) do
     See `Triplex.ParamPlugConfig` to check all the allowed `config` flags.
     """
 
-    import Triplex.Plug
     alias Triplex.ParamPlugConfig
 
     @doc false
     def init(opts), do: struct(ParamPlugConfig, opts)
 
     @doc false
-    def call(conn, config),
-      do: put_tenant(conn, get_param(conn, config), config)
+    def call(conn, config), do: Triplex.Plug.put_tenant(conn, get_param(conn, config), config)
 
     defp get_param(conn, %ParamPlugConfig{param: key}),
       do: get_param(conn, key)

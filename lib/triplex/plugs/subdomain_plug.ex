@@ -13,7 +13,6 @@ if Code.ensure_loaded?(Plug) do
     See `Triplex.SubdomainPlugConfig` to check all the allowed `config` flags.
     """
 
-    import Triplex.Plug
     alias Plug.Conn
     alias Triplex.SubdomainPlugConfig
 
@@ -21,8 +20,7 @@ if Code.ensure_loaded?(Plug) do
     def init(opts), do: struct(SubdomainPlugConfig, opts)
 
     @doc false
-    def call(conn, config),
-      do: put_tenant(conn, get_subdomain(conn, config), config)
+    def call(conn, config), do: Triplex.Plug.put_tenant(conn, get_subdomain(conn, config), config)
 
     defp get_subdomain(_conn, %SubdomainPlugConfig{endpoint: nil}) do
       nil

@@ -14,10 +14,6 @@ defmodule Mix.Triplex do
   rolls back the repository tenant migrations
   """
 
-  import Mix.Ecto
-  import Mix.EctoSQL
-  import Triplex, only: [config: 0]
-
   @aliases [
     r: :repo,
     n: :step
@@ -45,7 +41,7 @@ defmodule Mix.Triplex do
   or `Mix.raise`'s if it fails.
   """
   def ensure_tenant_migrations_path(repo) do
-    path = Path.join(source_repo_priv(repo), config().migrations_path)
+    path = Path.join(source_repo_priv(repo), Triplex.config().migrations_path)
 
     if not Mix.Project.umbrella?() and not File.dir?(path) do
       raise_missing_migrations(Path.relative_to_cwd(path), repo)
@@ -74,7 +70,7 @@ defmodule Mix.Triplex do
   `migrator` function.
   """
   def run_tenant_migrations(args, direction, migrator \\ &Ecto.Migrator.run/4) do
-    repos = parse_repo(args)
+    repos = Mix.Ecto.parse_repo(args)
     {opts, _} = OptionParser.parse!(args, strict: @switches, aliases: @aliases)
 
     opts =
@@ -91,7 +87,7 @@ defmodule Mix.Triplex do
   end
 
   defp run_tenant_migrations(repo, args, opts, direction, migrator) do
-    ensure_repo(repo, args)
+    Mix.Ecto.ensure_repo(repo, args)
     path = ensure_tenant_migrations_path(repo)
     {:ok, pid, apps} = ensure_started(repo, opts)
 
@@ -113,5 +109,74 @@ defmodule Mix.Triplex do
 
     pid && repo.stop()
     restart_apps_if_migrated(apps, migrated)
+  end
+
+  @doc """
+  Returns the private repository path relative to the source.
+  """
+  def source_repo_priv(repo) do
+    config = repo.config()
+    priv = config[:priv] || "priv/#{repo |> Module.split() |> List.last() |> Macro.underscore()}"
+    app = Keyword.fetch!(config, :otp_app)
+    Path.join(Mix.Project.deps_paths()[app] || File.cwd!(), priv)
+  end
+
+  @doc """
+  Ensures the given repository is started and running.
+  """
+  @spec ensure_started(Ecto.Repo.t(), Keyword.t()) :: {:ok, pid | nil, [atom]}
+  def ensure_started(repo, opts) do
+    {:ok, started} = Application.ensure_all_started(:ecto_sql)
+
+    # If we starting EctoSQL just now, assume
+    # logger has not been properly booted yet.
+    if :ecto_sql in started && Process.whereis(Logger) do
+      backends = Application.get_env(:logger, :backends, [])
+
+      try do
+        Logger.App.stop()
+        Application.put_env(:logger, :backends, [:console])
+        :ok = Logger.App.start()
+      after
+        Application.put_env(:logger, :backends, backends)
+      end
+    end
+
+    {:ok, apps} = repo.__adapter__.ensure_all_started(repo.config(), :temporary)
+    pool_size = Keyword.get(opts, :pool_size, 2)
+
+    case repo.start_link(pool_size: pool_size) do
+      {:ok, pid} ->
+        {:ok, pid, apps}
+
+      {:error, {:already_started, _pid}} ->
+        {:ok, nil, apps}
+
+      {:error, error} ->
+        Mix.raise("Could not start repo #{inspect(repo)}, error: #{inspect(error)}")
+    end
+  end
+
+  @doc """
+  Restarts the app if there was any migration command.
+  """
+  @spec restart_apps_if_migrated([atom], list()) :: :ok
+  def restart_apps_if_migrated(_apps, []), do: :ok
+
+  def restart_apps_if_migrated(apps, [_ | _]) do
+    # Silence the logger to avoid application down messages.
+    Logger.remove_backend(:console)
+
+    for app <- Enum.reverse(apps) do
+      Application.stop(app)
+    end
+
+    for app <- apps do
+      Application.ensure_all_started(app)
+    end
+
+    :ok
+  after
+    Logger.add_backend(:console, flush: true)
   end
 end

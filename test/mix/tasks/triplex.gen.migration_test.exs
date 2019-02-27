@@ -2,11 +2,10 @@ defmodule Mix.Tasks.Triplex.Gen.MigrationTest do
   use ExUnit.Case, async: true
 
   import Support.FileHelpers
-  import Triplex, only: [config: 0]
-  import Mix.Tasks.Triplex.Gen.Migration, only: [run: 1]
+  alias Mix.Tasks.Triplex.Gen.Migration
 
-  tmp_path = Path.join(tmp_path(), inspect(Triplex.Gen.Migration))
-  @migrations_path Path.join(tmp_path, config().migrations_path)
+  tmp_path = Path.join(tmp_path(), inspect(Migration))
+  @migrations_path Path.join(tmp_path, Triplex.config().migrations_path)
 
   defmodule Repo do
     def __adapter__ do
@@ -14,7 +13,7 @@ defmodule Mix.Tasks.Triplex.Gen.MigrationTest do
     end
 
     def config do
-      [priv: "tmp/#{inspect(Triplex.Gen.Migration)}", otp_app: :triplex]
+      [priv: "tmp/#{inspect(Migration)}", otp_app: :triplex]
     end
   end
 
@@ -31,7 +30,7 @@ defmodule Mix.Tasks.Triplex.Gen.MigrationTest do
   end
 
   test "generates a new migration" do
-    run(["-r", to_string(Repo), "test"])
+    Migration.run(["-r", to_string(Repo), "test"])
     assert [name] = File.ls!(@migrations_path)
     assert String.match?(name, ~r/^\d{14}_test\.exs$/)
 
@@ -46,12 +45,12 @@ defmodule Mix.Tasks.Triplex.Gen.MigrationTest do
   end
 
   test "underscores the filename when generating a migration" do
-    run(["-r", to_string(Repo), "MyMigration"])
+    Migration.run(["-r", to_string(Repo), "MyMigration"])
     assert [name] = File.ls!(@migrations_path)
     assert String.match?(name, ~r/^\d{14}_my_migration\.exs$/)
   end
 
   test "raises when missing file" do
-    assert_raise Mix.Error, fn -> run(["-r", to_string(Repo)]) end
+    assert_raise Mix.Error, fn -> Migration.run(["-r", to_string(Repo)]) end
   end
 end

@@ -1,6 +1,7 @@
 defmodule Mix.Tasks.Triplex.MigrationsTest do
   use ExUnit.Case
-  import Mix.Tasks.Triplex.Migrations, only: [run: 3]
+
+  alias Mix.Tasks.Triplex.Migrations
   alias Ecto.Migrator
 
   @repos [Triplex.PGTestRepo, Triplex.MSTestRepo]
@@ -24,7 +25,7 @@ defmodule Mix.Tasks.Triplex.MigrationsTest do
     for repo <- @repos do
       Triplex.create_schema("migrations_test", repo)
 
-      run(["-r", repo], &Migrator.migrations/2, fn msg ->
+      Migrations.run(["-r", repo], &Migrator.migrations/2, fn msg ->
         assert msg =~
                  Enum.map_join(Triplex.all(repo), fn tenant ->
                    """

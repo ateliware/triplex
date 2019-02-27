@@ -1,12 +1,11 @@
 defmodule Mix.Tasks.Triplex.Mysql.Install do
   use Mix.Task
 
-  import Macro, only: [camelize: 1]
-  import Mix.Generator
-  import Mix.Ecto
+  require Mix.Generator
 
   alias Mix.Project
   alias Ecto.Migrator
+  alias Mix.Generator
 
   @migration_name "create_tenant"
 
@@ -19,11 +18,11 @@ defmodule Mix.Tasks.Triplex.Mysql.Install do
 
   @doc false
   def run(args) do
-    no_umbrella!("ecto.gen.migration")
-    repos = parse_repo(args)
+    Mix.Ecto.no_umbrella!("ecto.gen.migration")
+    repos = Mix.Ecto.parse_repo(args)
 
     Enum.each(repos, fn repo ->
-      ensure_repo(repo, args)
+      Mix.Ecto.ensure_repo(repo, args)
 
       if repo.__adapter__ != Ecto.Adapters.MySQL do
         Mix.raise("the tenant table only makes sense for MySQL repositories")
@@ -31,9 +30,9 @@ defmodule Mix.Tasks.Triplex.Mysql.Install do
 
       path = Path.relative_to(Migrator.migrations_path(repo), Project.app_path())
       file = Path.join(path, "#{timestamp()}_#{@migration_name}.exs")
-      create_directory(path)
+      Generator.create_directory(path)
 
-      create_file(
+      Generator.create_file(
         file,
         migration_template(
           repo: repo,
@@ -51,8 +50,8 @@ defmodule Mix.Tasks.Triplex.Mysql.Install do
 
   defp pad(i), do: i |> to_string() |> String.pad_leading(2, "0")
 
-  embed_template(:migration, """
-  defmodule <%= Module.concat([@repo, Migrations, camelize(@migration_name)]) %> do
+  Generator.embed_template(:migration, """
+  defmodule <%= Module.concat([@repo, Migrations, Macro.camelize(@migration_name)]) %> do
     use Ecto.Migration
 
     def change do

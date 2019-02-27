@@ -3,9 +3,10 @@ defmodule Mix.Tasks.Triplex.Mysql.InstallTest do
 
   import Support.FileHelpers
 
-  tmp_path = Path.join(tmp_path(), inspect(Triplex.MySQL.Install))
+  alias Mix.Tasks.Triplex.Mysql.Install
+
+  tmp_path = Path.join(tmp_path(), inspect(Install))
   @migrations_path Path.join(tmp_path, "migrations")
-  import Mix.Tasks.Triplex.Mysql.Install, only: [run: 1]
 
   defmodule MySQLRepo do
     def __adapter__ do
@@ -13,7 +14,7 @@ defmodule Mix.Tasks.Triplex.Mysql.InstallTest do
     end
 
     def config do
-      [priv: "tmp/#{inspect(Triplex.MySQL.Install)}", otp_app: :triplex]
+      [priv: "tmp/#{inspect(Install)}", otp_app: :triplex]
     end
   end
 
@@ -40,7 +41,7 @@ defmodule Mix.Tasks.Triplex.Mysql.InstallTest do
   end
 
   test "generates a migration to install mysql" do
-    run(["-r", to_string(MySQLRepo)])
+    Install.run(["-r", to_string(MySQLRepo)])
     assert [name] = File.ls!(@migrations_path)
     assert String.match?(name, ~r/^\d{14}_create_tenant\.exs$/)
 
@@ -61,7 +62,7 @@ defmodule Mix.Tasks.Triplex.Mysql.InstallTest do
     msg = "the tenant table only makes sense for MySQL repositories"
 
     assert_raise Mix.Error, msg, fn ->
-      run(["-r", to_string(PGRepo)])
+      Install.run(["-r", to_string(PGRepo)])
     end
   end
 end

@@ -1,8 +1,5 @@
 defmodule Mix.Tasks.Triplex.Migrations do
   use Mix.Task
-  import Mix.EctoSQL
-  import Mix.Ecto
-  import Mix.Triplex
 
   alias Ecto.Migrator
 
@@ -36,13 +33,13 @@ defmodule Mix.Tasks.Triplex.Migrations do
 
   @doc false
   def run(args, migrations \\ &Migrator.migrations/2, puts \\ &IO.puts/1) do
-    repos = parse_repo(args)
+    repos = Mix.Ecto.parse_repo(args)
 
     result =
       Enum.map(repos, fn repo ->
-        ensure_repo(repo, args)
-        ensure_tenant_migrations_path(repo)
-        {:ok, pid, _} = ensure_started(repo, all: true)
+        Mix.Ecto.ensure_repo(repo, args)
+        Mix.Triplex.ensure_tenant_migrations_path(repo)
+        {:ok, pid, _} = Mix.Triplex.ensure_started(repo, all: true)
 
         migration_lists = migrations.(repo, Triplex.migrations_path(repo))
         tenants_state = tenants_state(repo, migration_lists)

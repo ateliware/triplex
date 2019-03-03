@@ -3,9 +3,9 @@ defmodule Triplex.Note do
   import Ecto.Changeset
 
   schema "notes" do
-    field :body, :string
-    belongs_to :parent, Triplex.Note
-    has_many :children, Triplex.Note, foreign_key: :parent_id
+    field(:body, :string)
+    belongs_to(:parent, Triplex.Note)
+    has_many(:children, Triplex.Note, foreign_key: :parent_id)
   end
 
   def changeset(model, params \\ %{}) do
@@ -16,4 +16,3 @@ defmodule Triplex.Note do
     |> validate_required(:body)
   end
 end
-

@@ -45,8 +45,13 @@ defmodule Triplex do
   names.
   """
   def reserved_tenants do
-    [nil, "public", "information_schema", ~r/^pg_/ |
-     config().reserved_tenants]
+    [
+      nil,
+      "public",
+      "information_schema",
+      ~r/^pg_/
+      | config().reserved_tenants
+    ]
   end
 
   @doc """
@@ -59,20 +64,22 @@ defmodule Triplex do
     |> tenant_field()
     |> reserved_tenant?()
   end
+
   def reserved_tenant?(tenant) do
     do_reserved_tenant?(tenant) or
       tenant
       |> to_prefix()
       |> do_reserved_tenant?()
   end
+
   defp do_reserved_tenant?(prefix) do
-    Enum.any? reserved_tenants(), fn (i) ->
+    Enum.any?(reserved_tenants(), fn i ->
       if is_bitstring(prefix) and Regex.regex?(i) do
         Regex.match?(i, prefix)
       else
         i == prefix
       end
-    end
+    end)
   end
 
   @doc """
@@ -86,9 +93,43 @@ defmodule Triplex do
   sending `migrate/2` as the `func` callback.
 
   See `migrate/2` for more details about the migration running.
+
+  ### Ecto 3 migrations, triplex and transactions
+
+  So on Ecto 3, migrations were changed to run on async tasks. Because of
+  that it's not possible anymore to run `Triplex.create/2` inside of a
+  transaction anymore.
+
+  But there is a way to achieve the same results using `create_schema/3`
+  and `migrate/2`. Here is an example using transaction:
+
+      Repo.transaction(fn ->
+        {:ok, _} = Triplex.create("tenant")
+        User.insert!(%{name: "Demo user 1"})
+        User.insert!(%{name: "Demo user 2"})
+      end)
+
+  And here is how you could achieve the same results on success or fail:
+
+      Triplex.create_schema("tenant", Repo, fn(tenant, repo) ->
+        Repo.transaction(fn ->
+          {:ok, _} = Triplex.migrate(tenant, repo)
+          User.insert!(%{name: "Demo user 1"})
+          User.insert!(%{name: "Demo user 2"})
+
+          # the `create_schema/3` function must return `{:ok, "tenant"}`
+          # if succeeded, and `Repo.transaction` transforms the function results
+          # on this tuple
+          tenant
+        end)
+      end)
+
+  So, if the function given to `create_schema/3` returns an error tuple, it will
+  rollback the created schema and return that tuple to you. Check out
+  `create_schema/3` docs for more details.
   """
   def create(tenant, repo \\ config().repo) do
-    create_schema(tenant, repo, &(migrate(&1, &2)))
+    create_schema(tenant, repo, &migrate(&1, &2))
   end
 
   @doc """
@@ -99,7 +140,8 @@ defmodule Triplex do
   After creating it successfully, the given `func` callback is called with
   the `tenant` and the `repo` as arguments. The `func` must return
   `{:ok, any}` if successfull or `{:error, reason}` otherwise. In the case
-  the `func` fails, this func will fail with the same `reason`.
+  the `func` fails, this func will rollback the created schema and
+  fail with the same `reason`.
 
   The function `to_prefix/1` will be applied to the `tenant`.
   """
@@ -107,39 +149,58 @@ defmodule Triplex do
     if reserved_tenant?(tenant) do
       {:error, reserved_message(tenant)}
     else
-      sql = case repo.__adapter__ do
-        Ecto.Adapters.MySQL -> "CREATE DATABASE #{to_prefix(tenant)}"
-        _ -> "CREATE SCHEMA \"#{to_prefix(tenant)}\""
-      end
-      with {:ok, _} <- SQL.query(repo, sql, []),
-           {:ok, _} <- add_to_tenants_table(tenant, repo),
-           {:ok, _} <- exec_func(func, tenant, repo) do
-        {:ok, tenant}
-      else
-        {:error, %PGError{} = e} -> {:error, PGError.message(e)}
-        {:error, %MXError{} = e} -> {:error, MXError.message(e)}
-        {:error, msg} -> {:error, msg}
+      sql =
+        case repo.__adapter__ do
+          Ecto.Adapters.MySQL -> "CREATE DATABASE #{to_prefix(tenant)}"
+          Ecto.Adapters.Postgres -> "CREATE SCHEMA \"#{to_prefix(tenant)}\""
+        end
+
+      case SQL.query(repo, sql, []) do
+        {:ok, _} ->
+          with {:ok, _} <- add_to_tenants_table(tenant, repo),
+               {:ok, _} <- exec_func(func, tenant, repo) do
+            {:ok, tenant}
+          else
+            {:error, reason} ->
+              drop(tenant, repo)
+              {:error, error_message(reason)}
+          end
+
+        {:error, reason} ->
+          {:error, error_message(reason)}
       end
     end
   end
 
+  defp error_message(%PGError{} = e), do: PGError.message(e)
+  defp error_message(%MXError{} = e), do: MXError.message(e)
+  defp error_message(msg), do: msg
+
   defp add_to_tenants_table(tenant, repo) do
-    if repo.__adapter__ == Ecto.Adapters.MySQL do
-      SQL.query(repo, "INSERT INTO #{Triplex.config().tenant_table} (name) VALUES (?)", [tenant])
-    else
-      {:ok, :skipped}
+    case repo.__adapter__ do
+      Ecto.Adapters.MySQL ->
+        sql = "INSERT INTO #{Triplex.config().tenant_table} (name) VALUES (?)"
+        SQL.query(repo, sql, [tenant])
+
+      Ecto.Adapters.Postgres ->
+        {:ok, :skipped}
     end
   end
+
   defp remove_from_tenants_table(tenant, repo) do
-    if repo.__adapter__ == Ecto.Adapters.MySQL do
-      SQL.query(repo, "DELETE FROM #{Triplex.config().tenant_table} WHERE NAME = ?", [tenant])
-    else
-      {:ok, :skipped}
+    case repo.__adapter__ do
+      Ecto.Adapters.MySQL ->
+        SQL.query(repo, "DELETE FROM #{Triplex.config().tenant_table} WHERE NAME = ?", [tenant])
+
+      Ecto.Adapters.Postgres ->
+        {:ok, :skipped}
     end
   end
+
   defp exec_func(nil, tenant, _) do
     {:ok, tenant}
   end
+
   defp exec_func(func, tenant, repo) when is_function(func) do
     case func.(tenant, repo) do
       {:ok, _} -> {:ok, tenant}
@@ -158,18 +219,19 @@ defmodule Triplex do
     if reserved_tenant?(tenant) do
       {:error, reserved_message(tenant)}
     else
-      adapter = repo.__adapter__
-      sql = case adapter do
-        Ecto.Adapters.MySQL -> "DROP DATABASE #{to_prefix(tenant)}"
-        _ -> "DROP SCHEMA \"#{to_prefix(tenant)}\" CASCADE"
-      end
+      sql =
+        case repo.__adapter__ do
+          Ecto.Adapters.MySQL -> "DROP DATABASE #{to_prefix(tenant)}"
+          Ecto.Adapters.Postgres -> "DROP SCHEMA \"#{to_prefix(tenant)}\" CASCADE"
+        end
+
       with {:ok, _} <- SQL.query(repo, sql, []),
-        {:ok, _} <- remove_from_tenants_table(tenant, repo)
-      do
+           {:ok, _} <- remove_from_tenants_table(tenant, repo) do
         {:ok, tenant}
       else
         {:error, %PGError{} = e} ->
           {:error, PGError.message(e)}
+
         {:error, %MXError{} = e} ->
           {:error, MXError.message(e)}
       end
@@ -185,23 +247,29 @@ defmodule Triplex do
   `new_tenant`.
   """
   def rename(old_tenant, new_tenant, repo \\ config().repo) do
-    cond do
-     reserved_tenant?(new_tenant) ->
+    if reserved_tenant?(new_tenant) do
       {:error, reserved_message(new_tenant)}
-    repo.__adapter__ == Ecto.Adapters.MySQL ->
-      {:error, "you cannot rename tenants in a MySQL database."}
-    true ->
-      sql = """
-      ALTER SCHEMA \"#{to_prefix(old_tenant)}\"
-      RENAME TO \"#{to_prefix(new_tenant)}\"
-      """
-      case SQL.query(repo, sql, []) do
-        {:ok, _} ->
-          {:ok, new_tenant}
-        {:error, %PGError{} = e} ->
-          {:error, PGError.message(e)}
-        {:error, %MXError{} = e} ->
-          {:error, MXError.message(e)}
+    else
+      case repo.__adapter__ do
+        Ecto.Adapters.MySQL ->
+          {:error, "you cannot rename tenants in a MySQL database."}
+
+        Ecto.Adapters.Postgres ->
+          sql = """
+          ALTER SCHEMA \"#{to_prefix(old_tenant)}\"
+          RENAME TO \"#{to_prefix(new_tenant)}\"
+          """
+
+          case SQL.query(repo, sql, []) do
+            {:ok, _} ->
+              {:ok, new_tenant}
+
+            {:error, %PGError{} = e} ->
+              {:error, PGError.message(e)}
+
+            {:error, %MXError{} = e} ->
+              {:error, MXError.message(e)}
+          end
       end
     end
   end
@@ -210,18 +278,22 @@ defmodule Triplex do
   Returns all the tenants on the given `repo`.
   """
   def all(repo \\ config().repo) do
-    sql = case repo.__adapter__ do
-      Ecto.Adapters.MySQL ->
-        "SELECT name FROM #{config().tenant_table}"
-      Ecto.Adapters.Postgres ->
-        """
-        SELECT schema_name
-        FROM information_schema.schemata
-        """
-    end
+    sql =
+      case repo.__adapter__ do
+        Ecto.Adapters.MySQL ->
+          "SELECT name FROM #{config().tenant_table}"
+
+        Ecto.Adapters.Postgres ->
+          """
+          SELECT schema_name
+          FROM information_schema.schemata
+          """
+      end
+
     %{rows: result} = SQL.query!(repo, sql, [])
+
     result
-    |> List.flatten
+    |> List.flatten()
     |> Enum.filter(&(!reserved_tenant?(&1)))
   end
 
@@ -234,19 +306,21 @@ defmodule Triplex do
     if reserved_tenant?(tenant) do
       false
     else
-      sql = case repo.__adapter__ do
-        Ecto.Adapters.MySQL ->
-          "SELECT COUNT(*) FROM #{config().tenant_table} WHERE name = ?"
-        Ecto.Adapters.Postgres ->
-        """
-        SELECT COUNT(*)
-        FROM information_schema.schemata
-        WHERE schema_name = $1
-        """
-    end
-    %{rows: [[count]]} =
-      SQL.query!(repo, sql, [to_prefix(tenant)])
-    count == 1
+      sql =
+        case repo.__adapter__ do
+          Ecto.Adapters.MySQL ->
+            "SELECT COUNT(*) FROM #{config().tenant_table} WHERE name = ?"
+
+          Ecto.Adapters.Postgres ->
+            """
+            SELECT COUNT(*)
+            FROM information_schema.schemata
+            WHERE schema_name = $1
+            """
+        end
+
+      %{rows: [[count]]} = SQL.query!(repo, sql, [to_prefix(tenant)])
+      count == 1
     end
   end
 
@@ -259,17 +333,22 @@ defmodule Triplex do
   """
   def migrate(tenant, repo \\ config().repo) do
     Code.compiler_options(ignore_module_conflict: true)
+
     try do
-      migrated_versions = Migrator.run(repo,
-                                       migrations_path(repo),
-                                       :up,
-                                       all: true,
-                                       prefix: to_prefix(tenant))
+      migrated_versions =
+        Migrator.run(
+          repo,
+          migrations_path(repo),
+          :up,
+          all: true,
+          prefix: to_prefix(tenant)
+        )
 
       {:ok, migrated_versions}
     rescue
       e in PGError ->
         {:error, PGError.message(e)}
+
       e in MXError ->
         {:error, MXError.message(e)}
     after
@@ -281,14 +360,11 @@ defmodule Triplex do
   Returns the path for the tenant migrations on your `repo`.
   """
   def migrations_path(repo \\ config().repo) do
-    path =
-      repo.config()
-      |> Keyword.get(:priv, "priv/#{repo |> Module.split |> List.last |> Macro.underscore}")
-      |> Path.join(config().migrations_path)
-
-    repo.config()
-    |> Keyword.get(:otp_app)
-    |> Application.app_dir(path)
+    repo
+    |> Migrator.migrations_path()
+    |> Path.join("..")
+    |> Path.join(config().migrations_path)
+    |> Path.expand()
   end
 
   @doc """
@@ -302,11 +378,13 @@ defmodule Triplex do
   will get the `tenant_field/0` from it to concat the prefix.
   """
   def to_prefix(tenant, prefix \\ config().tenant_prefix)
+
   def to_prefix(tenant, prefix) when is_map(tenant) do
     tenant
     |> tenant_field()
     |> to_prefix(prefix)
   end
+
   def to_prefix(tenant, nil), do: tenant
   def to_prefix(tenant, prefix), do: "#{prefix}#{tenant}"
 

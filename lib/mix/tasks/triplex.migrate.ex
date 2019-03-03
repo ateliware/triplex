@@ -1,33 +1,43 @@
 defmodule Mix.Tasks.Triplex.Migrate do
   use Mix.Task
-  require Logger
-  import Mix.Ecto
-  import Mix.Triplex
-
-  alias Ecto.Adapters.SQL.Sandbox
-  alias Ecto.Migrator
 
   @shortdoc "Runs the repository tenant migrations"
-  @recursive true
 
   @moduledoc """
   Runs the pending tenant migrations for the given repository.
 
-  The repository must be set under `:ecto_repos` in the
-  current app configuration or given via the `-r` option.
+  Tenant migrations are expected at "priv/YOUR_REPO/tenant_migrations" directory
+  of the current application, where "YOUR_REPO" is the last segment
+  in your repository name. For example, the repository `MyApp.Repo`
+  will use "priv/repo/tenant_migrations". The repository `Whatever.MyRepo`
+  will use "priv/my_repo/tenant_migrations".
 
-  By default, migrations are expected at "priv/YOUR_REPO/migrations"
-  directory of the current application but it can be configured
-  to be any subdirectory of `priv` by specifying the `:priv` key
-  under the repository configuration.
+  You can configure a repository to use another directory by specifying
+  the `:priv` key under the repository configuration. The "tenant_migrations"
+  part will be automatically appended to it. For instance, to use
+  "priv/custom_repo/tenant_migrations":
 
-  Runs all pending migrations by default. To migrate up
-  to a version number, supply `--to version_number`.
-  To migrate up a specific number of times, use `--step n`.
+      config :my_app, MyApp.Repo, priv: "priv/custom_repo"
 
-  If the repository has not been started yet, one will be
-  started outside our application supervision tree and shutdown
-  afterwards.
+  To change the "tenant_migrations" part, you can set the `:migrations_path`
+  config under triplex configuration. For example, to use "priv/repo/my_migrations":
+
+      config :triplex, migrations_path: "my_migrations"
+
+  This task runs all pending tenant migrations by default. To migrate up to a
+  specific version number, supply `--to version_number`. To migrate a
+  specific number of times, use `--step n`.
+
+  The repositories to migrate are the ones specified under the
+  `:ecto_repos` option in the current app configuration. However,
+  if the `-r` option is given, it replaces the `:ecto_repos` config.
+
+  Since Ecto tasks can only be executed once, if you need to migrate
+  multiple repositories, set `:ecto_repos` accordingly or pass the `-r`
+  flag multiple times.
+
+  If a repository has not yet been started, one will be started outside
+  your application supervision tree and shutdown afterwards.
 
   ## Examples
 
@@ -45,10 +55,13 @@ defmodule Mix.Tasks.Triplex.Migrate do
     * `-r`, `--repo` - the repo to migrate
     * `--all` - run all pending migrations
     * `--step` / `-n` - run n number of pending migrations
-    * `--to` / `-v` - run all migrations up to and including version
+    * `--to` - run all migrations up to and including version
     * `--quiet` - do not log migration commands
-    * `--pool-size` - the pool size if the repository is started only for the
-    task (defaults to 1)
+    * `--pool-size` - the pool size if the repository is started only for the task (defaults to 1)
+    * `--log-sql` - log the raw sql migrations are running
+    * `--strict-version-order` - abort when applying a migration with old timestamp
+    * `--no-compile` - does not compile applications before migrating
+    * `--no-deps-check` - does not check depedendencies before migrating
 
   ## PS
 
@@ -56,60 +69,10 @@ defmodule Mix.Tasks.Triplex.Migrate do
   not work, please compare them and try to stay as close to it as possible.
   """
 
-  @doc false
-  def run(args, migrator \\ &Migrator.run/4, testing? \\ false) do
-    repos = parse_repo(args)
+  alias Mix.Triplex
 
-    {opts, _, _} = OptionParser.parse args,
-      switches: [all: :boolean, step: :integer, to: :integer, quiet: :boolean,
-                 pool_size: :integer],
-      aliases: [n: :step, v: :to]
-
-    opts =
-      if opts[:to] || opts[:step] || opts[:all],
-        do: opts,
-        else: Keyword.put(opts, :all, true)
-
-    opts =
-      if opts[:quiet],
-        do: Keyword.put(opts, :log, false),
-        else: opts
-
-    Enum.each repos, fn repo ->
-      ensure_repo(repo, args)
-      ensure_tenant_migrations_path(repo)
-      {:ok, pid, apps} = ensure_started(repo, opts)
-
-      # If the pool is Ecto.Adapters.SQL.Sandbox,
-      # let's make sure we get a connection outside of a sandbox.
-      if sandbox?(repo) and !testing? do
-        Sandbox.checkin(repo)
-        Sandbox.checkout(repo, sandbox: false, ownership_timeout: :infinity)
-      end
-
-      Code.compiler_options(ignore_module_conflict: true)
-      migrated = Enum.reduce Triplex.all(repo), [], fn(tenant, acc) ->
-        migrate_tenant(opts, migrator, repo, tenant, acc)
-      end
-      Code.compiler_options(ignore_module_conflict: false)
-
-      pid && repo.stop(pid)
-      restart_apps_if_migrated(apps, List.flatten(migrated))
-    end
-  end
-
-  defp migrate_tenant(opts, migrator, repo, tenant, acc) do
-    Logger.log :info, "===> Running migrations to \"#{tenant}\" tenant"
-    opts = Keyword.put(opts, :prefix, tenant)
-
-    [try do
-       migrator.(repo, Mix.Triplex.migrations_path(repo), :up, opts)
-    after
-      sandbox?(repo) && Sandbox.checkin(repo)
-    end | acc]
-  end
-
-  defp sandbox?(repo) do
-    repo.config[:pool] == Sandbox
+  @impl true
+  def run(args, migrator \\ &Triplex.run_tenant_migrations/2) do
+    migrator.(args, :up)
   end
 end

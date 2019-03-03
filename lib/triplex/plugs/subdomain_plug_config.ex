@@ -14,6 +14,6 @@ defmodule Triplex.SubdomainPlugConfig do
   defstruct [
     :endpoint,
     :tenant_handler,
-    assign: :current_tenant,
+    assign: :current_tenant
   ]
 end

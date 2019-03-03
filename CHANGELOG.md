@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.3.0
+## 1.3.0-rc.0
 
 ### Added
 

@@ -1,18 +1,17 @@
-app:
-  build: .
-  command: bash -c 'while [ true ]; do sleep 10; done'
-  environment:
-    - PG_HOST=postgres
-    - PG_USERNAME=postgres
-    - PG_PASSWORD=postgres
-  volumes:
-    - .:/app
-  links:
-    - postgres
+version: '3'
 
-postgres:
-  image: postgres:9.5
-  environment:
-    - POSTGRES_PASSWORD=postgres
-  ports:
-    - 5432
+services:
+  mysql:
+    image: mariadb:latest
+    environment:
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+      - MYSQL_ROOT_PASSWORD=
+    ports:
+      - 3306:3306
+
+  postgres:
+    image: postgres:latest
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - 5432:5432

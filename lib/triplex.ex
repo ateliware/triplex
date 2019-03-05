@@ -22,8 +22,6 @@ defmodule Triplex do
 
   alias Ecto.Adapters.SQL
   alias Ecto.Migrator
-  alias Postgrex.Error, as: PGError
-  alias Mariaex.Error, as: MXError
 
   @doc """
   Returns a `%Triplex.Config{}` struct with all the args loaded from the app
@@ -172,9 +170,13 @@ defmodule Triplex do
     end
   end
 
-  defp error_message(%PGError{} = e), do: PGError.message(e)
-  defp error_message(%MXError{} = e), do: MXError.message(e)
-  defp error_message(msg), do: msg
+  defp error_message(msg) do
+    if Exception.exception?(msg) do
+      Exception.message(msg)
+    else
+      msg
+    end
+  end
 
   defp add_to_tenants_table(tenant, repo) do
     case repo.__adapter__ do
@@ -229,11 +231,8 @@ defmodule Triplex do
            {:ok, _} <- remove_from_tenants_table(tenant, repo) do
         {:ok, tenant}
       else
-        {:error, %PGError{} = e} ->
-          {:error, PGError.message(e)}
-
-        {:error, %MXError{} = e} ->
-          {:error, MXError.message(e)}
+        {:error, exception} ->
+          {:error, error_message(exception)}
       end
     end
   end
@@ -264,11 +263,8 @@ defmodule Triplex do
             {:ok, _} ->
               {:ok, new_tenant}
 
-            {:error, %PGError{} = e} ->
-              {:error, PGError.message(e)}
-
-            {:error, %MXError{} = e} ->
-              {:error, MXError.message(e)}
+            {:error, message} ->
+              {:error, error_message(message)}
           end
       end
     end
@@ -346,11 +342,8 @@ defmodule Triplex do
 
       {:ok, migrated_versions}
     rescue
-      e in PGError ->
-        {:error, PGError.message(e)}
-
-      e in MXError ->
-        {:error, MXError.message(e)}
+      exception ->
+        {:error, error_message(exception)}
     after
       Code.compiler_options(ignore_module_conflict: false)
     end

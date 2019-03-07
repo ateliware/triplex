@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.3.0-rc.1
+
+### Bug fixes
+
+- Fixed compilation error when optional adapters are not included in downstream project.
+
+### Changed
+
+- docker-compose configuration that allows easy setup for test databases.
+
 ## 1.3.0-rc.0
 
 ### Added

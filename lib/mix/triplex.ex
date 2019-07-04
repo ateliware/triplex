@@ -103,7 +103,7 @@ defmodule Mix.Triplex do
 
     migrated =
       Enum.flat_map(Triplex.all(repo), fn tenant ->
-        opts = Keyword.put(opts, :prefix, tenant)
+        opts = Keyword.put(opts, :prefix, Triplex.to_prefix(tenant))
 
         if function_exported?(pool, :unboxed_run, 2) do
           pool.unboxed_run(repo, fn -> migrator.(repo, path, direction, opts) end)

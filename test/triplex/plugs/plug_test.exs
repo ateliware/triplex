@@ -12,15 +12,18 @@ defmodule Triplex.PlugTest do
       :get
       |> conn("/")
       |> Plug.put_tenant("power", %ParamPlugConfig{})
+
     assert conn.assigns[:current_tenant] == "power"
   end
 
   test "put_tenant/3 must call the handler" do
-    handler = fn("oi") -> "olá" end
+    handler = fn "oi" -> "olá" end
+
     conn =
       :get
       |> conn("/")
       |> Plug.put_tenant("oi", %ParamPlugConfig{tenant_handler: handler})
+
     assert conn.assigns[:current_tenant] == "olá"
   end
 
@@ -29,6 +32,7 @@ defmodule Triplex.PlugTest do
       :get
       |> conn("/")
       |> Plug.put_tenant("power", %ParamPlugConfig{assign: :tenant})
+
     assert conn.assigns[:tenant] == "power"
   end
 
@@ -38,6 +42,7 @@ defmodule Triplex.PlugTest do
       |> conn("/")
       |> assign(:current_tenant, "already_set")
       |> Plug.put_tenant("power", %ParamPlugConfig{})
+
     assert conn.assigns[:current_tenant] == "already_set"
   end
 
@@ -46,6 +51,7 @@ defmodule Triplex.PlugTest do
       :get
       |> conn("/")
       |> Plug.put_tenant("www", %ParamPlugConfig{})
+
     assert conn.assigns[:current_tenant] == nil
   end
 
@@ -60,7 +66,8 @@ defmodule Triplex.PlugTest do
   end
 
   test "ensure_tenant/3 must call the success callback" do
-    callback = fn(conn, _) -> assign(conn, :test, "blag") end
+    callback = fn conn, _ -> assign(conn, :test, "blag") end
+
     conn =
       :get
       |> conn("/")
@@ -71,7 +78,8 @@ defmodule Triplex.PlugTest do
   end
 
   test "ensure_tenant/3 must call the failure callback" do
-    callback = fn(conn, _) -> assign(conn, :test, "blog") end
+    callback = fn conn, _ -> assign(conn, :test, "blog") end
+
     conn =
       :get
       |> conn("/")

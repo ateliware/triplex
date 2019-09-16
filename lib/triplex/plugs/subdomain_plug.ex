@@ -13,23 +13,27 @@ if Code.ensure_loaded?(Plug) do
     See `Triplex.SubdomainPlugConfig` to check all the allowed `config` flags.
     """
 
-    import Triplex.Plug
     alias Plug.Conn
+
     alias Triplex.SubdomainPlugConfig
+    alias Triplex.Plug
 
     @doc false
     def init(opts), do: struct(SubdomainPlugConfig, opts)
 
     @doc false
-    def call(conn, config),
-      do: put_tenant(conn, get_subdomain(conn, config), config)
+    def call(conn, config), do: Plug.put_tenant(conn, get_subdomain(conn, config), config)
 
     defp get_subdomain(_conn, %SubdomainPlugConfig{endpoint: nil}) do
       nil
     end
-    defp get_subdomain(%Conn{host: host},
-                      %SubdomainPlugConfig{endpoint: endpoint}) do
+
+    defp get_subdomain(
+           %Conn{host: host},
+           %SubdomainPlugConfig{endpoint: endpoint}
+         ) do
       root_host = endpoint.config(:url)[:host]
+
       if host in [root_host, "localhost", "127.0.0.1", "0.0.0.0"] do
         nil
       else

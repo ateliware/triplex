@@ -1,4 +1,4 @@
-Triplex.TestRepo.start_link
+Triplex.MSTestRepo.start_link()
+Triplex.PGTestRepo.start_link()
 
-ExUnit.start
-
+ExUnit.start()

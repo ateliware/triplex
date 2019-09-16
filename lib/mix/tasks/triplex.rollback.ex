@@ -1,43 +1,50 @@
 defmodule Mix.Tasks.Triplex.Rollback do
   use Mix.Task
-  require Logger
-  import Mix.Ecto
-  import Mix.Triplex
-
-  alias Ecto.Adapters.SQL.Sandbox
-  alias Ecto.Migrator
 
   @shortdoc "Rolls back the repository tenant migrations"
-  @recursive true
 
   @moduledoc """
   Reverts applied migrations in the given repository.
 
-  The repository must be set under `:ecto_repos` in the
-  current app configuration or given via the `-r` option.
+  Tenant migrations are expected at "priv/YOUR_REPO/tenant_migrations" directory
+  of the current application, where "YOUR_REPO" is the last segment
+  in your repository name. For example, the repository `MyApp.Repo`
+  will use "priv/repo/tenant_migrations". The repository `Whatever.MyRepo`
+  will use "priv/my_repo/tenant_migrations".
 
-  By default, migrations are expected at "priv/YOUR_REPO/migrations"
-  directory of the current application but it can be configured
-  by specifying the `:priv` key under the repository configuration.
+  You can configure a repository to use another directory by specifying
+  the `:priv` key under the repository configuration. The "migrations"
+  part will be automatically appended to it. For instance, to use
+  "priv/custom_repo/migrations":
 
-  Runs the latest applied migration by default. To roll back to
-  to a version number, supply `--to version_number`.
+      config :my_app, MyApp.Repo, priv: "priv/custom_repo"
 
-  To roll back a specific number of times, use `--step n`.
+  To change the "tenant_migrations" part, you can set the `:migrations_path`
+  config under triplex configuration. For example, to use "priv/repo/my_migrations":
 
-  To undo all applied migrations, provide `--all`.
+      config :triplex, migrations_path: "my_migrations"
 
-  If the repository has not been started yet, one will be
-  started outside our application supervision tree and shutdown
-  afterwards.
+  This task runs all pending migrations by default. Runs the last
+  applied migration by default. To roll back to a version number,
+  supply `--to version_number`. To roll back a specific number of
+  times, use `--step n`. To undo all applied migrations, provide
+  `--all`.
+
+  The repositories to rollback are the ones specified under the
+  `:ecto_repos` option in the current app configuration. However,
+  if the `-r` option is given, it replaces the `:ecto_repos` config.
+
+  If a repository has not yet been started, one will be started outside
+  your application supervision tree and shutdown afterwards.
 
   ## Examples
 
       mix ecto.rollback
       mix ecto.rollback -r Custom.Repo
+
       mix ecto.rollback -n 3
       mix ecto.rollback --step 3
-      mix ecto.rollback -v 20080906120000
+
       mix ecto.rollback --to 20080906120000
 
   ## Command line options
@@ -45,10 +52,12 @@ defmodule Mix.Tasks.Triplex.Rollback do
     * `-r`, `--repo` - the repo to rollback
     * `--all` - revert all applied migrations
     * `--step` / `-n` - revert n number of applied migrations
-    * `--to` / `-v` - revert all migrations down to and including version
+    * `--to` - revert all migrations down to and including version
     * `--quiet` - do not log migration commands
-    * `--pool-size` - the pool size if the repository is started only for the
-    task (defaults to 1)
+    * `--pool-size` - the pool size if the repository is started only for the task (defaults to 1)
+    * `--log-sql` - log the raw sql migrations are running
+    * `--no-compile` - does not compile applications before rolling back
+    * `--no-deps-check` - does not check depedendencies before rolling back
 
   ## PS
 
@@ -56,60 +65,10 @@ defmodule Mix.Tasks.Triplex.Rollback do
   not work, please compare them and try to stay as close to it as possible.
   """
 
-  @doc false
-  def run(args, migrator \\ &Migrator.run/4, testing? \\ false) do
-    repos = parse_repo(args)
+  alias Mix.Triplex
 
-    {opts, _, _} = OptionParser.parse args,
-      switches: [all: :boolean, step: :integer, to: :integer, start: :boolean,
-                 quiet: :boolean, pool_size: :integer],
-      aliases: [n: :step, v: :to]
-
-    opts =
-      if opts[:to] || opts[:step] || opts[:all],
-        do: opts,
-        else: Keyword.put(opts, :step, 1)
-
-    opts =
-      if opts[:quiet],
-        do: Keyword.put(opts, :log, false),
-        else: opts
-
-    Enum.each repos, fn repo ->
-      ensure_repo(repo, args)
-      ensure_tenant_migrations_path(repo)
-      {:ok, pid, apps} = ensure_started(repo, opts)
-
-      # If the pool is Ecto.Adapters.SQL.Sandbox,
-      # let's make sure we get a connection outside of a sandbox.
-      if sandbox?(repo) and !testing? do
-        Sandbox.checkin(repo)
-        Sandbox.checkout(repo, sandbox: false, ownership_timeout: :infinity)
-      end
-
-      Code.compiler_options(ignore_module_conflict: true)
-      migrated = Enum.reduce Triplex.all(repo), [], fn(tenant, acc) ->
-        migrate_tenant(opts, migrator, repo, tenant, acc)
-      end
-      Code.compiler_options(ignore_module_conflict: false)
-
-      pid && repo.stop(pid)
-      restart_apps_if_migrated(apps, List.flatten(migrated))
-    end
-  end
-
-  defp migrate_tenant(opts, migrator, repo, tenant, acc) do
-    Logger.log :info, "===> Rolling back \"#{tenant}\" tenant"
-    opts = Keyword.put(opts, :prefix, tenant)
-
-    [try do
-       migrator.(repo, Mix.Triplex.migrations_path(repo), :down, opts)
-    after
-      sandbox?(repo) && Sandbox.checkin(repo)
-    end | acc]
-  end
-
-  defp sandbox?(repo) do
-    repo.config[:pool] == Sandbox
+  @impl true
+  def run(args, migrator \\ &Triplex.run_tenant_migrations/2) do
+    migrator.(args, :down)
   end
 end

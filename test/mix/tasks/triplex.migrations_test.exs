@@ -1,41 +1,53 @@
 defmodule Mix.Tasks.Triplex.MigrationsTest do
   use ExUnit.Case
-  import Mix.Tasks.Triplex.Migrations, only: [run: 3]
+
+  alias Mix.Tasks.Triplex.Migrations
   alias Ecto.Migrator
 
-  @repo Triplex.TestRepo
+  @repos [Triplex.PGTestRepo, Triplex.MSTestRepo]
 
   setup do
-    if @repo.__adapter__ == Ecto.Adapters.MySQL do
-      Ecto.Adapters.SQL.Sandbox.mode(@repo, :auto)
-      drop_tenants = fn -> 
-        Triplex.drop("migrations_test", @repo)
+    for repo <- @repos do
+      Ecto.Adapters.SQL.Sandbox.mode(repo, :auto)
+
+      drop_tenants = fn ->
+        Triplex.drop("migrations_test_down", repo)
+        Triplex.drop("migrations_test_up", repo)
       end
+
       drop_tenants.()
-      on_exit drop_tenants
-      :ok
-    else 
-      Ecto.Adapters.SQL.Sandbox.mode(@repo, :manual)
-      :ok = Ecto.Adapters.SQL.Sandbox.checkout(@repo)
+      on_exit(drop_tenants)
     end
+
+    :ok
   end
 
   test "runs migration for each tenant, with the correct prefix" do
-    Triplex.create_schema("migrations_test", @repo)
+    for repo <- @repos do
+      Triplex.create_schema("migrations_test_down", repo)
+      Triplex.create("migrations_test_up", repo)
 
-    run(["-r", @repo], &Migrator.migrations/2, fn(msg) ->
-      assert msg == Enum.map_join(Triplex.all(@repo), fn tenant ->
-        """
+      Migrations.run(["-r", repo], &Migrator.migrations/2, fn msg ->
+        assert msg =~
+                 """
+                 Repo: #{inspect(repo)}
+                 Tenant: migrations_test_down
 
-        Repo: Triplex.TestRepo
-        Tenant: #{tenant}
+                   Status    Migration ID    Migration Name
+                 --------------------------------------------------
+                   down      20160711125401  test_create_tenant_notes
+                 """
 
-          Status    Migration ID    Migration Name
-        --------------------------------------------------
-          down      20160711125401  test_create_tenant_notes
-        """
+        assert msg =~
+                 """
+                 Repo: #{inspect(repo)}
+                 Tenant: migrations_test_up
+
+                   Status    Migration ID    Migration Name
+                 --------------------------------------------------
+                   up        20160711125401  test_create_tenant_notes
+                 """
       end)
-    end)
+    end
   end
 end
-

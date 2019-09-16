@@ -22,7 +22,7 @@ Triplex leverages database data segregation techniques (such as [Postgres schema
 ```elixir
 def deps do
   [
-    {:triplex, "~> 1.1.5"},
+    {:triplex, "~> 1.3.0"},
   ]
 end
 ```

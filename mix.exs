@@ -5,7 +5,7 @@ defmodule Triplex.Mixfile do
     [
       app: :triplex,
       version: "1.3.0",
-      elixir: "~> 1.6",
+      elixir: "~> 1.7",
       description: "Build multitenant applications on top of Ecto.",
       package: package(),
       elixirc_paths: elixirc_paths(Mix.env()),

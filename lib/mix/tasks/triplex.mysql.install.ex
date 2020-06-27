@@ -9,7 +9,7 @@ defmodule Mix.Tasks.Triplex.Mysql.Install do
   require Mix.Generator
 
   alias Ecto.Migrator
-  alias Ecto.Adapters.MySQL
+  alias Ecto.Adapters.MyXQL
   alias Mix.Ecto
   alias Mix.Generator
   alias Mix.Project
@@ -26,7 +26,7 @@ defmodule Mix.Tasks.Triplex.Mysql.Install do
     Enum.each(repos, fn repo ->
       Ecto.ensure_repo(repo, args)
 
-      if repo.__adapter__ != MySQL do
+      if repo.__adapter__ != MyXQL do
         Mix.raise("the tenant table only makes sense for MySQL repositories")
       end
 

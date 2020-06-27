@@ -1,11 +1,11 @@
 language: elixir
 elixir:
-  - 1.10
+  - 1.7
 otp_release:
   - '20.0'
 addons:
   postgresql: '9.4'
-  mysql: '5.6'
+  mysql: '5.7.30'
 
 install:
   - mix local.rebar --force

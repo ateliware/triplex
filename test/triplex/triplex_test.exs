@@ -161,6 +161,13 @@ defmodule TriplexTest do
     assert Triplex.to_prefix(%{id: "a"}, "b") == "ba"
   end
 
+  test "to_prefix/2 must not apply the given prefix to the tenant name if prefix exists" do
+    assert Triplex.to_prefix("a", nil) == "a"
+    assert Triplex.to_prefix(%{id: "a"}, nil) == "a"
+    assert Triplex.to_prefix("a", "b") == "ba"
+    assert Triplex.to_prefix(%{id: "ba"}, "b") == "ba"
+  end
+
   defp assert_creates_notes_table(repo, fun) do
     assert_notes_table_is_dropped(repo)
     fun.()

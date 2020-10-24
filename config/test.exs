@@ -24,8 +24,8 @@ config :triplex, Triplex.PGTestRepo,
 
 config :triplex, Triplex.MSTestRepo,
   username: System.get_env("MS_USERNAME") || "root",
-  password: System.get_env("MS_PASSWORD") || "",
-  hostname: System.get_env("MS_HOST") || "localhost",
+  password: System.get_env("MS_PASSWORD") || "password",
+  hostname: System.get_env("MS_HOST") || "127.0.0.1",
   database: "triplex_test",
   pool: Ecto.Adapters.SQL.Sandbox
 

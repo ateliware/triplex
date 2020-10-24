@@ -379,7 +379,13 @@ defmodule Triplex do
   end
 
   def to_prefix(tenant, nil), do: tenant
-  def to_prefix(tenant, prefix), do: "#{prefix}#{tenant}"
+  # def to_prefix(tenant, prefix), do: "#{prefix}#{tenant}"
+  def to_prefix(tenant, prefix) do
+    cond do
+      !String.contains?(tenant, prefix) -> "#{prefix}#{tenant}"
+      true -> tenant
+    end
+  end
 
   @doc """
   Returns the value of the configured tenant field on the given `map`.

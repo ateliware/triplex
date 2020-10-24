@@ -379,7 +379,7 @@ defmodule Triplex do
   end
 
   def to_prefix(tenant, nil), do: tenant
-  # def to_prefix(tenant, prefix), do: "#{prefix}#{tenant}"
+
   def to_prefix(tenant, prefix) do
     cond do
       !String.contains?(tenant, prefix) -> "#{prefix}#{tenant}"

@@ -8,8 +8,7 @@ defmodule TriplexTest do
   @migration_version 20_160_711_125_401
   @repos [PGTestRepo, MSTestRepo]
   @tenant "trilegal"
-  # Added to supress warning about vars used in string interpolation
-  @compile :nowarn_unused_vars
+
 
   setup do
     for repo <- @repos do
@@ -36,18 +35,21 @@ defmodule TriplexTest do
     end
   end
 
+  @tag :error_msg
   test "create/2 must return a error if the tenant already exists" do
     prefix = Triplex.config().tenant_prefix
-    pg_msg = "ERROR 42P06 (duplicate_schema) schema #{prefix}lala already exists"
-    ms_msg = "(1007): Can't create database '#{prefix}lala'; database exists"
+    pg_msg = "ERROR 42P06 (duplicate_schema) schema \"#{prefix}lala\" already exists"
+    ms_msg = "(1007): Can't create database \'#{prefix}lala\'; database exists"
 
     assert {:ok, _} = Triplex.create("lala", PGTestRepo)
 
-    assert {:error, pg_msg} = Triplex.create("lala", PGTestRepo)
+    {:error, pg_result} = Triplex.create("lala", PGTestRepo)
+    assert pg_msg == pg_result
 
     assert {:ok, _} = Triplex.create("lala", MSTestRepo)
 
-    assert {:error, ms_msg} = Triplex.create("lala", MSTestRepo)
+    {:error, ms_result} = Triplex.create("lala", MSTestRepo)
+    assert ms_msg == ms_result
   end
 
   test "create/2 must return a error if the tenant is reserved" do
@@ -167,9 +169,10 @@ defmodule TriplexTest do
 
       result =
         Triplex.all(repo)
-        |> Enum.each(fn t -> Triplex.migrate(t) end)
+        |> Enum.map(fn t -> Triplex.migrate(t, repo) end)
 
-      assert result == :ok
+        assert result == [ok: [], ok: [], ok: []]
+
     end
   end
 

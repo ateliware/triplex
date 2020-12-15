@@ -8,8 +8,8 @@ defmodule Mix.Tasks.Triplex.Mysql.Install do
 
   require Mix.Generator
 
-  alias Ecto.Migrator
   alias Ecto.Adapters.MyXQL
+  alias Ecto.Migrator
   alias Mix.Ecto
   alias Mix.Generator
   alias Mix.Project

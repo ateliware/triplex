@@ -1,5 +1,11 @@
 # Changelog
 
+### MyXQL Support
+
+- I created a support for myxql package and mariaex package was removed,
+to use this update you will need to add the myxql package e.g `{:myxql, "~> 0.3.0"}`
+in your `mix.exs` file.
+
 ## 1.3.0
 
 ### Bug fixes

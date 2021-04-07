@@ -42,7 +42,7 @@ defmodule TriplexTest do
 
     assert {:ok, _} = Triplex.create("lala", MSTestRepo)
 
-    assert {:error, "(1007): Can't create database 'lala'; database exists"} =
+    assert {:error, "(1007) (ER_DB_CREATE_EXISTS) Can't create database 'lala'; database exists"} =
              Triplex.create("lala", MSTestRepo)
   end
 
@@ -170,7 +170,7 @@ defmodule TriplexTest do
   defp assert_notes_table_is_dropped(repo) do
     error =
       case repo.__adapter__() do
-        Ecto.Adapters.MySQL -> Mariaex.Error
+        Ecto.Adapters.MyXQL -> MyXQL.Error
         Ecto.Adapters.Postgres -> Postgrex.Error
       end
 
@@ -203,7 +203,7 @@ defmodule TriplexTest do
   defp force_migration_failure(repo, migration_function) do
     sql =
       case repo.__adapter__ do
-        Ecto.Adapters.MySQL ->
+        Ecto.Adapters.MyXQL ->
           """
           DELETE FROM #{@tenant}.schema_migrations
           """
@@ -216,8 +216,8 @@ defmodule TriplexTest do
 
     {:ok, _} = Ecto.Adapters.SQL.query(repo, sql, [])
 
-    if repo.__adapter__ == Ecto.Adapters.MySQL do
-      migration_function.("(1050): Table 'notes' already exists")
+    if repo.__adapter__ == Ecto.Adapters.MyXQL do
+      migration_function.("(1050) (ER_TABLE_EXISTS_ERROR) Table 'notes' already exists")
     else
       migration_function.("ERROR 42P07 (duplicate_table) relation \"notes\" already exists")
     end

@@ -10,7 +10,7 @@ defmodule Mix.Tasks.Triplex.Mysql.InstallTest do
 
   defmodule MySQLRepo do
     def __adapter__ do
-      Ecto.Adapters.MySQL
+      Ecto.Adapters.MyXQL
     end
 
     def config do

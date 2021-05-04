@@ -9,6 +9,7 @@ config :triplex,
     "security",
     "app",
     "staging",
+    "triplex_test",
     ~r/^db\d+$/
   ]
 

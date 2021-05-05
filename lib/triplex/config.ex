@@ -5,9 +5,9 @@ defmodule Triplex.Config do
   - `repo`: the ecto repo that will be used to execute the schema operations.
   - `tenant_prefix`: a prefix for all tenants.
   - `reserved_tenants`: a list of reserved tenants, which cannot be created
-  thourhg triplex APIs. The items here can be strings or regexes.
-  - `tenant_field`: an atom with the name of the field to get the tenant name
-  if the given tenant is a struct. By default it's `:id`.
+  through triplex APIs. The items here can be strings or regexes.
+  - `opts`: extra options to supply for the create database query for MySQL driver
+  supported options are `charset` and `collate`.
   """
 
   defstruct [
@@ -16,6 +16,9 @@ defmodule Triplex.Config do
     migrations_path: "tenant_migrations",
     reserved_tenants: [],
     tenant_field: :id,
-    tenant_table: :tenants
+    opts: [
+      charset: "utf8mb4",
+      collate: "utf8mb4_bin"
+    ]
   ]
 end

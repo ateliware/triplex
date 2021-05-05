@@ -57,7 +57,7 @@ defmodule Mix.Tasks.Triplex.Rollback do
     * `--pool-size` - the pool size if the repository is started only for the task (defaults to 1)
     * `--log-sql` - log the raw sql migrations are running
     * `--no-compile` - does not compile applications before rolling back
-    * `--no-deps-check` - does not check depedendencies before rolling back
+    * `--no-deps-check` - does not check dependencies before rolling back
 
   ## PS
 

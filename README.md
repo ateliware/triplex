@@ -40,19 +40,6 @@ Configure the Repo you will use to execute the database commands with:
 
     config :triplex, repo: ExampleApp.Repo
 
-### Additional configuration for MySQL
-
-In MySQL, each tenant will have its own MySQL database.
-Triplex uses a table called `tenants` in the main Repo to keep track of the different tenants.
-Generate the migration that will create the table by running:
-
-	mix triplex.mysql.install
-
-And then create the table:
-
-	mix ecto.migrate
-
-
 ## Usage
 
 Here is a quick overview of what you can do with triplex!

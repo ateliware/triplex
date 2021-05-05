@@ -15,8 +15,8 @@ if Code.ensure_loaded?(Plug) do
 
     alias Plug.Conn
 
-    alias Triplex.SessionPlugConfig
     alias Triplex.Plug
+    alias Triplex.SessionPlugConfig
 
     @doc false
     def init(opts), do: struct(SessionPlugConfig, opts)

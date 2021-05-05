@@ -2,7 +2,7 @@ defmodule Triplex do
   @moduledoc """
   This is the main module of Triplex.
 
-  The main objetive of it is to make a little bit easier to manage tenants
+  The main objective of it is to make a little bit easier to manage tenants
   through postgres db schemas or equivalents, executing queries and commands
   inside and outside the tenant without much boilerplate code.
 
@@ -15,7 +15,7 @@ defmodule Triplex do
 
       Repo.all(User, prefix: Triplex.to_prefix("my_tenant"))
 
-  It's a good idea to call `Triplex.to_prefix` on your tenant name, altough is
+  It's a good idea to call `Triplex.to_prefix` on your tenant name, although is
   not required. Because, if you configured a `tenant_prefix`, this function will
   return the prefixed one.
   """
@@ -30,7 +30,7 @@ defmodule Triplex do
   def config, do: struct(Triplex.Config, Application.get_all_env(:triplex))
 
   @doc """
-  Returns the list of reserverd tenants.
+  Returns the list of reserved tenants.
 
   By default, there are some limitations for the name of a tenant depending on
   the database, like "public" or anything that start with "pg_".
@@ -47,6 +47,9 @@ defmodule Triplex do
       nil,
       "public",
       "information_schema",
+      "performance_schema",
+      "sys",
+      "mysql",
       ~r/^pg_/
       | config().reserved_tenants
     ]
@@ -137,7 +140,7 @@ defmodule Triplex do
 
   After creating it successfully, the given `func` callback is called with
   the `tenant` and the `repo` as arguments. The `func` must return
-  `{:ok, any}` if successfull or `{:error, reason}` otherwise. In the case
+  `{:ok, any}` if successful or `{:error, reason}` otherwise. In the case
   the `func` fails, this func will rollback the created schema and
   fail with the same `reason`.
 
@@ -147,18 +150,24 @@ defmodule Triplex do
     if reserved_tenant?(tenant) do
       {:error, reserved_message(tenant)}
     else
+      charset = config().opts[:charset]
+      collate = config().opts[:collate]
+
       sql =
         case repo.__adapter__ do
-          Ecto.Adapters.MyXQL -> "CREATE DATABASE #{to_prefix(tenant)}"
-          Ecto.Adapters.Postgres -> "CREATE SCHEMA \"#{to_prefix(tenant)}\""
+          Ecto.Adapters.MyXQL ->
+            "CREATE DATABASE #{to_prefix(tenant)} DEFAULT CHARSET #{charset} COLLATE #{collate}"
+
+          Ecto.Adapters.Postgres ->
+            "CREATE SCHEMA \"#{to_prefix(tenant)}\""
         end
 
       case SQL.query(repo, sql, []) do
         {:ok, _} ->
-          with {:ok, _} <- add_to_tenants_table(tenant, repo),
-               {:ok, _} <- exec_func(func, tenant, repo) do
-            {:ok, tenant}
-          else
+          case exec_func(func, tenant, repo) do
+            {:ok, _} ->
+              {:ok, tenant}
+
             {:error, reason} ->
               drop(tenant, repo)
               {:error, error_message(reason)}
@@ -175,27 +184,6 @@ defmodule Triplex do
       Exception.message(msg)
     else
       msg
-    end
-  end
-
-  defp add_to_tenants_table(tenant, repo) do
-    case repo.__adapter__ do
-      Ecto.Adapters.MyXQL ->
-        sql = "INSERT INTO #{Triplex.config().tenant_table} (name) VALUES (?)"
-        SQL.query(repo, sql, [tenant])
-
-      Ecto.Adapters.Postgres ->
-        {:ok, :skipped}
-    end
-  end
-
-  defp remove_from_tenants_table(tenant, repo) do
-    case repo.__adapter__ do
-      Ecto.Adapters.MyXQL ->
-        SQL.query(repo, "DELETE FROM #{Triplex.config().tenant_table} WHERE NAME = ?", [tenant])
-
-      Ecto.Adapters.Postgres ->
-        {:ok, :skipped}
     end
   end
 
@@ -227,10 +215,10 @@ defmodule Triplex do
           Ecto.Adapters.Postgres -> "DROP SCHEMA \"#{to_prefix(tenant)}\" CASCADE"
         end
 
-      with {:ok, _} <- SQL.query(repo, sql, []),
-           {:ok, _} <- remove_from_tenants_table(tenant, repo) do
-        {:ok, tenant}
-      else
+      case SQL.query(repo, sql, []) do
+        {:ok, _} ->
+          {:ok, tenant}
+
         {:error, exception} ->
           {:error, error_message(exception)}
       end
@@ -274,17 +262,10 @@ defmodule Triplex do
   Returns all the tenants on the given `repo`.
   """
   def all(repo \\ config().repo) do
-    sql =
-      case repo.__adapter__ do
-        Ecto.Adapters.MyXQL ->
-          "SELECT name FROM #{config().tenant_table}"
-
-        Ecto.Adapters.Postgres ->
-          """
-          SELECT schema_name
-          FROM information_schema.schemata
-          """
-      end
+    sql = """
+    SELECT schema_name
+    FROM information_schema.schemata
+    """
 
     %{rows: result} = SQL.query!(repo, sql, [])
 
@@ -305,7 +286,11 @@ defmodule Triplex do
       sql =
         case repo.__adapter__ do
           Ecto.Adapters.MyXQL ->
-            "SELECT COUNT(*) FROM #{config().tenant_table} WHERE name = ?"
+            """
+            SELECT COUNT(*)
+            FROM information_schema.schemata
+            WHERE schema_name = ?
+            """
 
           Ecto.Adapters.Postgres ->
             """

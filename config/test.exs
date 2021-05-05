@@ -10,6 +10,7 @@ config :triplex,
     "app",
     "staging",
     "triplex_test",
+    "travis",
     ~r/^db\d+$/
   ]
 

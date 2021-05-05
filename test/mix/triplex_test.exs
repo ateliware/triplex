@@ -1,5 +1,5 @@
 defmodule Mix.TriplexTest do
-  use ExUnit.Case, async: false
+  use ExUnit.Case, async: true
 
   @repos [Triplex.PGTestRepo, Triplex.MSTestRepo]
 

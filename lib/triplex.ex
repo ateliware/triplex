@@ -156,7 +156,7 @@ defmodule Triplex do
       sql =
         case repo.__adapter__ do
           Ecto.Adapters.MyXQL ->
-            "CREATE DATABASE #{to_prefix(tenant)} DEFAULT CHARSET #{charset} COLLATE #{collate}"
+            "CREATE DATABASE `#{to_prefix(tenant)}` DEFAULT CHARSET #{charset} COLLATE #{collate}"
 
           Ecto.Adapters.Postgres ->
             "CREATE SCHEMA \"#{to_prefix(tenant)}\""

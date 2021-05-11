@@ -211,7 +211,7 @@ defmodule Triplex do
     else
       sql =
         case repo.__adapter__ do
-          Ecto.Adapters.MyXQL -> "DROP DATABASE #{to_prefix(tenant)}"
+          Ecto.Adapters.MyXQL -> "DROP DATABASE `#{to_prefix(tenant)}`"
           Ecto.Adapters.Postgres -> "DROP SCHEMA \"#{to_prefix(tenant)}\" CASCADE"
         end
 

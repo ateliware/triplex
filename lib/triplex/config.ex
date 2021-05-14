@@ -19,7 +19,7 @@ defmodule Triplex.Config do
     migrations_path: "tenant_migrations",
     reserved_tenants: [],
     tenant_field: :id,
-    tenant_table: :"information_schema.schemata",
+    tenant_table: :tenants,
     mysql: [
       charset: "utf8mb4",
       collate: "utf8mb4_bin"

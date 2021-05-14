@@ -14,8 +14,6 @@ config :triplex,
     ~r/^db\d+$/
   ]
 
-config :triplex, tenant_table: :tenants
-
 # Configure your database
 config :triplex, ecto_repos: [Triplex.PGTestRepo, Triplex.MSTestRepo]
 

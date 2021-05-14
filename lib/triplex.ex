@@ -164,10 +164,10 @@ defmodule Triplex do
 
       case SQL.query(repo, sql, []) do
         {:ok, _} ->
-          case exec_func(func, tenant, repo) do
-            {:ok, _} ->
-              {:ok, tenant}
-
+          with {:ok, _} <- add_to_tenants_table(tenant, repo),
+               {:ok, _} <- exec_func(func, tenant, repo) do
+            {:ok, tenant}
+          else
             {:error, reason} ->
               drop(tenant, repo)
               {:error, error_message(reason)}
@@ -184,6 +184,35 @@ defmodule Triplex do
       Exception.message(msg)
     else
       msg
+    end
+  end
+
+  defp add_to_tenants_table(tenant, repo) do
+    case repo.__adapter__ do
+      Ecto.Adapters.MyXQL ->
+        if Triplex.config().tenant_table == :"information_schema.schemata" do
+          {:ok, :skipped}
+        else
+          sql = "INSERT INTO #{Triplex.config().tenant_table} (name) VALUES (?)"
+          SQL.query(repo, sql, [tenant])
+        end
+
+      Ecto.Adapters.Postgres ->
+        {:ok, :skipped}
+    end
+  end
+
+  defp remove_from_tenants_table(tenant, repo) do
+    case repo.__adapter__ do
+      Ecto.Adapters.MyXQL ->
+        if Triplex.config().tenant_table == :"information_schema.schemata" do
+          {:ok, :skipped}
+        else
+          SQL.query(repo, "DELETE FROM #{Triplex.config().tenant_table} WHERE NAME = ?", [tenant])
+        end
+
+      Ecto.Adapters.Postgres ->
+        {:ok, :skipped}
     end
   end
 
@@ -215,10 +244,10 @@ defmodule Triplex do
           Ecto.Adapters.Postgres -> "DROP SCHEMA \"#{to_prefix(tenant)}\" CASCADE"
         end
 
-      case SQL.query(repo, sql, []) do
-        {:ok, _} ->
-          {:ok, tenant}
-
+      with {:ok, _} <- SQL.query(repo, sql, []),
+           {:ok, _} <- remove_from_tenants_table(tenant, repo) do
+        {:ok, tenant}
+      else
         {:error, exception} ->
           {:error, error_message(exception)}
       end
@@ -262,10 +291,22 @@ defmodule Triplex do
   Returns all the tenants on the given `repo`.
   """
   def all(repo \\ config().repo) do
-    sql = """
-    SELECT schema_name
-    FROM information_schema.schemata
-    """
+    sql =
+      case repo.__adapter__ do
+        Ecto.Adapters.MyXQL ->
+          field_name =
+            if Triplex.config().tenant_table == :"information_schema.schemata",
+              do: "schema_name",
+              else: "name"
+
+          "SELECT #{field_name} FROM `#{config().tenant_table}`"
+
+        Ecto.Adapters.Postgres ->
+          """
+          SELECT schema_name
+          FROM information_schema.schemata
+          """
+      end
 
     %{rows: result} = SQL.query!(repo, sql, [])
 
@@ -286,11 +327,7 @@ defmodule Triplex do
       sql =
         case repo.__adapter__ do
           Ecto.Adapters.MyXQL ->
-            """
-            SELECT COUNT(*)
-            FROM information_schema.schemata
-            WHERE schema_name = ?
-            """
+            "SELECT COUNT(*) FROM `#{config().tenant_table}` WHERE name = ?"
 
           Ecto.Adapters.Postgres ->
             """

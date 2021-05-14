@@ -91,7 +91,6 @@ defmodule TriplexTest do
       Triplex.create("lala", repo)
       Triplex.create("lili", repo)
       Triplex.create("lolo", repo)
-
       assert MapSet.new(Triplex.all(repo)) == MapSet.new(["lala", "lili", "lolo"])
     end
   end

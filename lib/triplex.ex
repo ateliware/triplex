@@ -150,8 +150,8 @@ defmodule Triplex do
     if reserved_tenant?(tenant) do
       {:error, reserved_message(tenant)}
     else
-      charset = config().opts[:charset]
-      collate = config().opts[:collate]
+      charset = config().mysql[:charset]
+      collate = config().mysql[:collate]
 
       sql =
         case repo.__adapter__ do

@@ -6,7 +6,8 @@ defmodule Triplex.Config do
   - `tenant_prefix`: a prefix for all tenants.
   - `reserved_tenants`: a list of reserved tenants, which cannot be created
   through triplex APIs. The items here can be strings or regexes.
-  - `opts`: extra options to supply for the create database query for MySQL driver
+  - `mysql`: extra options to supply for the create database query for MySQL driver.
+  The SQL standard allows a DEFAULT CHARACTER SET clause in CREATE SCHEMA than are presently accepted by PostgreSQL.
   supported options are `charset` and `collate`.
   """
 
@@ -16,7 +17,7 @@ defmodule Triplex.Config do
     migrations_path: "tenant_migrations",
     reserved_tenants: [],
     tenant_field: :id,
-    opts: [
+    mysql: [
       charset: "utf8mb4",
       collate: "utf8mb4_bin"
     ]

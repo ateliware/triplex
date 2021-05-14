@@ -7,7 +7,7 @@ defmodule Triplex.SubdomainPlugConfig do
   - `tenant_handler`: function to handle the tenant param. Its return will
   be used as the tenant.
   - `assign`: the name of the assign where we must save the tenant.
-  - `endpoint`: the Phoenix.Endpoint to get the host name to dicover the
+  - `endpoint`: the Phoenix.Endpoint to get the host name to discover the
   subdomain.
   """
 

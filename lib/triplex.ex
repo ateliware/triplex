@@ -150,16 +150,10 @@ defmodule Triplex do
     if reserved_tenant?(tenant) do
       {:error, reserved_message(tenant)}
     else
-      charset = config().mysql[:charset]
-      collate = config().mysql[:collate]
-
       sql =
         case repo.__adapter__ do
-          Ecto.Adapters.MyXQL ->
-            "CREATE DATABASE `#{to_prefix(tenant)}` DEFAULT CHARSET #{charset} COLLATE #{collate}"
-
-          Ecto.Adapters.Postgres ->
-            "CREATE SCHEMA \"#{to_prefix(tenant)}\""
+          Ecto.Adapters.MyXQL -> "CREATE DATABASE `#{to_prefix(tenant)}`"
+          Ecto.Adapters.Postgres -> "CREATE SCHEMA \"#{to_prefix(tenant)}\""
         end
 
       case SQL.query(repo, sql, []) do
@@ -294,12 +288,12 @@ defmodule Triplex do
     sql =
       case repo.__adapter__ do
         Ecto.Adapters.MyXQL ->
-          field_name =
+          column_name =
             if Triplex.config().tenant_table == :"information_schema.schemata",
               do: "schema_name",
               else: "name"
 
-          "SELECT #{field_name} FROM `#{config().tenant_table}`"
+          "SELECT #{column_name} FROM `#{config().tenant_table}`"
 
         Ecto.Adapters.Postgres ->
           """

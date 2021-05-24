@@ -5,7 +5,7 @@ defmodule Triplex.Config do
   - `repo`: the ecto repo that will be used to execute the schema operations.
   - `tenant_prefix`: a prefix for all tenants.
   - `reserved_tenants`: a list of reserved tenants, which cannot be created
-  thourhg triplex APIs. The items here can be strings or regexes.
+  through triplex APIs. The items here can be strings or regexes.
   - `tenant_field`: an atom with the name of the field to get the tenant name
   if the given tenant is a struct. By default it's `:id`.
   """

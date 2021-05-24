@@ -61,7 +61,7 @@ defmodule Mix.Tasks.Triplex.Migrate do
     * `--log-sql` - log the raw sql migrations are running
     * `--strict-version-order` - abort when applying a migration with old timestamp
     * `--no-compile` - does not compile applications before migrating
-    * `--no-deps-check` - does not check depedendencies before migrating
+    * `--no-deps-check` - does not check dependencies before migrating
 
   ## PS
 

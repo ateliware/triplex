@@ -3,8 +3,8 @@ defmodule Mix.Tasks.Triplex.Gen.Migration do
 
   require Mix.Generator
 
-  alias Mix.Project
   alias Mix.Generator
+  alias Mix.Project
 
   @shortdoc "Generates a new tenant migration for the repo"
 

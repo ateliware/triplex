@@ -2,7 +2,7 @@ defmodule Triplex do
   @moduledoc """
   This is the main module of Triplex.
 
-  The main objetive of it is to make a little bit easier to manage tenants
+  The main objective of it is to make a little bit easier to manage tenants
   through postgres db schemas or equivalents, executing queries and commands
   inside and outside the tenant without much boilerplate code.
 
@@ -15,7 +15,7 @@ defmodule Triplex do
 
       Repo.all(User, prefix: Triplex.to_prefix("my_tenant"))
 
-  It's a good idea to call `Triplex.to_prefix` on your tenant name, altough is
+  It's a good idea to call `Triplex.to_prefix` on your tenant name, although is
   not required. Because, if you configured a `tenant_prefix`, this function will
   return the prefixed one.
   """
@@ -30,7 +30,7 @@ defmodule Triplex do
   def config, do: struct(Triplex.Config, Application.get_all_env(:triplex))
 
   @doc """
-  Returns the list of reserverd tenants.
+  Returns the list of reserved tenants.
 
   By default, there are some limitations for the name of a tenant depending on
   the database, like "public" or anything that start with "pg_".
@@ -47,6 +47,9 @@ defmodule Triplex do
       nil,
       "public",
       "information_schema",
+      "performance_schema",
+      "sys",
+      "mysql",
       ~r/^pg_/
       | config().reserved_tenants
     ]
@@ -137,7 +140,7 @@ defmodule Triplex do
 
   After creating it successfully, the given `func` callback is called with
   the `tenant` and the `repo` as arguments. The `func` must return
-  `{:ok, any}` if successfull or `{:error, reason}` otherwise. In the case
+  `{:ok, any}` if successful or `{:error, reason}` otherwise. In the case
   the `func` fails, this func will rollback the created schema and
   fail with the same `reason`.
 
@@ -149,7 +152,7 @@ defmodule Triplex do
     else
       sql =
         case repo.__adapter__ do
-          Ecto.Adapters.MyXQL -> "CREATE DATABASE #{to_prefix(tenant)}"
+          Ecto.Adapters.MyXQL -> "CREATE DATABASE `#{to_prefix(tenant)}`"
           Ecto.Adapters.Postgres -> "CREATE SCHEMA \"#{to_prefix(tenant)}\""
         end
 
@@ -181,8 +184,12 @@ defmodule Triplex do
   defp add_to_tenants_table(tenant, repo) do
     case repo.__adapter__ do
       Ecto.Adapters.MyXQL ->
-        sql = "INSERT INTO #{Triplex.config().tenant_table} (name) VALUES (?)"
-        SQL.query(repo, sql, [tenant])
+        if Triplex.config().tenant_table == :"information_schema.schemata" do
+          {:ok, :skipped}
+        else
+          sql = "INSERT INTO #{Triplex.config().tenant_table} (name) VALUES (?)"
+          SQL.query(repo, sql, [tenant])
+        end
 
       Ecto.Adapters.Postgres ->
         {:ok, :skipped}
@@ -192,7 +199,11 @@ defmodule Triplex do
   defp remove_from_tenants_table(tenant, repo) do
     case repo.__adapter__ do
       Ecto.Adapters.MyXQL ->
-        SQL.query(repo, "DELETE FROM #{Triplex.config().tenant_table} WHERE NAME = ?", [tenant])
+        if Triplex.config().tenant_table == :"information_schema.schemata" do
+          {:ok, :skipped}
+        else
+          SQL.query(repo, "DELETE FROM #{Triplex.config().tenant_table} WHERE NAME = ?", [tenant])
+        end
 
       Ecto.Adapters.Postgres ->
         {:ok, :skipped}
@@ -223,7 +234,7 @@ defmodule Triplex do
     else
       sql =
         case repo.__adapter__ do
-          Ecto.Adapters.MyXQL -> "DROP DATABASE #{to_prefix(tenant)}"
+          Ecto.Adapters.MyXQL -> "DROP DATABASE `#{to_prefix(tenant)}`"
           Ecto.Adapters.Postgres -> "DROP SCHEMA \"#{to_prefix(tenant)}\" CASCADE"
         end
 
@@ -277,7 +288,12 @@ defmodule Triplex do
     sql =
       case repo.__adapter__ do
         Ecto.Adapters.MyXQL ->
-          "SELECT name FROM #{config().tenant_table}"
+          column_name =
+            if Triplex.config().tenant_table == :"information_schema.schemata",
+              do: "schema_name",
+              else: "name"
+
+          "SELECT #{column_name} FROM `#{config().tenant_table}`"
 
         Ecto.Adapters.Postgres ->
           """
@@ -305,7 +321,7 @@ defmodule Triplex do
       sql =
         case repo.__adapter__ do
           Ecto.Adapters.MyXQL ->
-            "SELECT COUNT(*) FROM #{config().tenant_table} WHERE name = ?"
+            "SELECT COUNT(*) FROM `#{config().tenant_table}` WHERE name = ?"
 
           Ecto.Adapters.Postgres ->
             """

@@ -15,8 +15,8 @@ if Code.ensure_loaded?(Plug) do
 
     alias Plug.Conn
 
-    alias Triplex.SubdomainPlugConfig
     alias Triplex.Plug
+    alias Triplex.SubdomainPlugConfig
 
     @doc false
     def init(opts), do: struct(SubdomainPlugConfig, opts)

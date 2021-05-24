@@ -46,19 +46,22 @@ In MySQL, each tenant will have its own MySQL database.
 Triplex uses a table called `tenants` in the main Repo to keep track of the different tenants.
 Generate the migration that will create the table by running:
 
-	mix triplex.mysql.install
+    mix triplex.mysql.install
 
 And then create the table:
 
-	mix ecto.migrate
+    mix ecto.migrate
 
+Otherwise, if you wish to skip this behavior, configure Triplex to use the default `information_schema.schemata` table:
+
+    config :triplex, tenant_table: :"information_schema.schemata"
 
 ## Usage
 
 Here is a quick overview of what you can do with triplex!
 
 
-### Creating, renaming and droping tenants
+### Creating, renaming and dropping tenants
 
 
 #### To create a new tenant:

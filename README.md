@@ -43,8 +43,8 @@ Configure the Repo you will use to execute the database commands with:
 ### Additional configuration for MySQL
 
 In MySQL, each tenant will have its own MySQL database.
-Triplex uses a table called `tenants` in the main Repo to keep track of the different tenants.
-Generate the migration that will create the table by running:
+Triplex used to use a table called `tenants` in the main Repo to keep track of the different tenants.
+If you wish to keep this behavior, generate the migration that will create the table by running:
 
     mix triplex.mysql.install
 
@@ -52,9 +52,11 @@ And then create the table:
 
     mix ecto.migrate
 
-Otherwise, if you wish to skip this behavior, configure Triplex to use the default `information_schema.schemata` table:
+Finally, configure Triplex to use the `tenants` table:
 
-    config :triplex, tenant_table: :"information_schema.schemata"
+    config :triplex, tenant_table: :tenants
+
+Otherwise, Triplex will continue to use the `information_schema.schemata` table as the default behavior for storing tenants.
 
 ## Usage
 

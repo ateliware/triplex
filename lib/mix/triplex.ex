@@ -98,7 +98,7 @@ defmodule Mix.Triplex do
     path = ensure_tenant_migrations_path(repo)
     {:ok, pid, apps} = ensure_started(repo, opts)
 
-    pool = repo.config[:pool]
+    pool = repo.config()[:pool]
     Code.compiler_options(ignore_module_conflict: true)
 
     migrated =
@@ -149,7 +149,7 @@ defmodule Mix.Triplex do
       end
     end
 
-    {:ok, apps} = repo.__adapter__.ensure_all_started(repo.config(), :temporary)
+    {:ok, apps} = repo.__adapter__().ensure_all_started(repo.config(), :temporary)
     pool_size = Keyword.get(opts, :pool_size, 2)
 
     case repo.start_link(pool_size: pool_size) do

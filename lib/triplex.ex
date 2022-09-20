@@ -284,7 +284,7 @@ defmodule Triplex do
   @doc """
   Returns all the tenants on the given `repo`.
   """
-  def all(repo \\ config().repo) do
+  def all(repo \\ config().repo, opts \\ []) do
     sql =
       case repo.__adapter__ do
         Ecto.Adapters.MyXQL ->
@@ -302,7 +302,7 @@ defmodule Triplex do
           """
       end
 
-    %{rows: result} = SQL.query!(repo, sql, [])
+    %{rows: result} = SQL.query!(repo, sql, [], opts)
 
     result
     |> List.flatten()

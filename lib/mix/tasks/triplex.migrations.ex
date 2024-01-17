@@ -42,12 +42,12 @@ defmodule Mix.Tasks.Triplex.Migrations do
       Enum.map(repos, fn repo ->
         Ecto.ensure_repo(repo, args)
         MTriplex.ensure_tenant_migrations_path(repo)
-        {:ok, pid, _} = MTriplex.ensure_started(repo, all: true)
+        {:ok, _pid, _} = MTriplex.ensure_started(repo, all: true)
 
         migration_lists = migrations.(repo, Triplex.migrations_path(repo))
         tenants_state = tenants_state(repo, migration_lists)
 
-        pid && repo.stop(pid)
+        repo.stop()
 
         tenants_state
       end)

@@ -1,11 +1,13 @@
 # Triplex
 
 [![Build Status](https://travis-ci.org/ateliware/triplex.svg?branch=master)](https://travis-ci.org/ateliware/triplex)
-[![Version](http://img.shields.io/hexpm/v/triplex.svg?style=flat)](https://hex.pm/packages/triplex)
-[![Downloads](https://img.shields.io/hexpm/dt/triplex.svg)](https://hex.pm/packages/triplex)
 [![Coverage Status](https://coveralls.io/repos/github/ateliware/triplex/badge.svg?branch=master)](https://coveralls.io/github/ateliware/triplex?branch=master)
-[![Code Climate](https://img.shields.io/codeclimate/github/ateliware/triplex.svg)](https://codeclimate.com/github/ateliware/triplex)
+[![Module Version](https://img.shields.io/hexpm/v/triplex.svg)](https://hex.pm/packages/triplex)
+[![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/triplex/)
 [![Inline docs](http://inch-ci.org/github/ateliware/triplex.svg?branch=master&style=flat)](http://inch-ci.org/github/ateliware/triplex)
+[![Total Download](https://img.shields.io/hexpm/dt/triplex.svg)](https://hex.pm/packages/triplex)
+[![License](https://img.shields.io/hexpm/l/triplex.svg)](https://github.com/ateliware/triplex/blob/master/LICENSE)
+[![Last Updated](https://img.shields.io/github/last-commit/ateliware/triplex.svg)](https://github.com/ateliware/triplex/commits/master)
 
 A simple and effective way to build multitenant applications on top of Ecto.
 
@@ -19,19 +21,19 @@ Triplex leverages database data segregation techniques (such as [Postgres schema
 
 1. Add `triplex` to your list of dependencies in `mix.exs`:
 
-```elixir
-def deps do
-  [
-    {:triplex, "~> 1.3.0"},
-  ]
-end
-```
+   ```elixir
+   def deps do
+     [
+       {:triplex, "~> 1.3.0"},
+     ]
+   end
+   ```
 
 2. Run in your shell:
 
-```bash
-mix deps.get
-```
+   ```bash
+   mix deps.get
+   ```
 
 
 ## Configuration
@@ -46,15 +48,21 @@ In MySQL, each tenant will have its own MySQL database.
 Triplex uses a table called `tenants` in the main Repo to keep track of the different tenants.
 Generate the migration that will create the table by running:
 
-    mix triplex.mysql.install
+```bash
+mix triplex.mysql.install
+```
 
 And then create the table:
 
-    mix ecto.migrate
+```bash
+mix ecto.migrate
+```
 
 Otherwise, if you wish to skip this behavior, configure Triplex to use the default `information_schema.schemata` table:
 
-    config :triplex, tenant_table: :"information_schema.schemata"
+```elixir
+config :triplex, tenant_table: :"information_schema.schemata"
+```
 
 ## Usage
 
@@ -145,3 +153,10 @@ For more information, check the `Triplex.Plug` documentation for an overview of 
 ## Thanks
 
 This lib is inspired by the gem [apartment](https://github.com/influitive/apartment), which does the same thing in Ruby on Rails world. We also give credit (and a lot of thanks) to @Dania02525 for the work on [apartmentex](https://github.com/Dania02525/apartmentex).  A lot of the work here is based on what she has done there.  And also to @jeffdeville, who forked ([tenantex](https://github.com/jeffdeville/tenantex)) taking a different approach, which gave us additional ideas.
+
+## Copyright and License
+
+Copyright (c) 2017 ateliware
+
+This work is free. You can redistribute it and/or modify it under the
+terms of the MIT License. See the [LICENSE.md](./LICENSE.md) file for more details.

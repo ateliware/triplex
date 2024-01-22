@@ -1,12 +1,14 @@
 defmodule Triplex.Mixfile do
   use Mix.Project
 
+  @source_url "https://github.com/ateliware/triplex"
+  @version "1.3.0"
+
   def project do
     [
       app: :triplex,
-      version: "1.3.0",
+      version: @version,
       elixir: "~> 1.7",
-      description: "Build multitenant applications on top of Ecto.",
       package: package(),
       elixirc_paths: elixirc_paths(Mix.env()),
       build_embedded: Mix.env() == :prod,
@@ -15,15 +17,11 @@ defmodule Triplex.Mixfile do
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: preferred_cli_env(),
       deps: deps(),
-      docs: [main: "readme", extras: ["README.md", "CHANGELOG.md"]],
+      docs: docs(),
       name: "Triplex",
-      source_url: "https://github.com/ateliware/triplex"
     ]
   end
 
-  # Configuration for the OTP application
-  #
-  # Type "mix help compile.app" for more information
   def application do
     [extra_applications: [:logger]]
   end
@@ -32,30 +30,17 @@ defmodule Triplex.Mixfile do
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
 
-  # Dependencies can be Hex packages:
-  #
-  #   {:mydep, "~> 0.3.0"}
-  #
-  # Or git/path repositories:
-  #
-  #   {:mydep, git: "https://github.com/elixir-lang/mydep.git", tag: "0.1.0"}
-  #
-  # To depend on another app inside the umbrella:
-  #
-  #   {:myapp, in_umbrella: true}
-  #
-  # Type "mix help deps" for more examples and options
   defp deps do
     [
       {:credo, "~> 0.8.10", only: [:test, :dev], optional: true, runtime: false},
+      {:decimal, ">= 1.6.0"},
       {:ecto_sql, "~> 3.4"},
-      {:ex_doc, "~> 0.18.0", only: :dev},
+      {:ex_doc, ">= 0.0.0", only: :docs, runtime: false},
       {:excoveralls, "~> 0.10", only: :test},
-      {:inch_ex, ">= 0.0.0", only: :docs},
+      {:inch_ex, ">= 0.0.0", only: :docs, runtime: false},
+      {:myxql, ">= 0.3.0", optional: true},
       {:plug, "~> 1.6", optional: true},
       {:postgrex, ">= 0.15.0", optional: true},
-      {:myxql, ">= 0.3.0", optional: true},
-      {:decimal, ">= 1.6.0"}
     ]
   end
 
@@ -76,18 +61,36 @@ defmodule Triplex.Mixfile do
   end
 
   defp package do
-    # These are the default files included in the package
     [
       name: :triplex,
+      description: "Build multitenant applications on top of Ecto.",
       files: ["lib", "mix.exs", "README*", "LICENSE*"],
       maintainers: ["Kelvin Stinghen"],
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/ateliware/triplex"}
+      links: %{"GitHub" => @source_url}
+    ]
+  end
+
+  defp docs do
+    [
+      extras: [
+        "CHANGELOG.md": [title: "Changelog"],
+        "CONTRIBUTING.md": [title: "Contributing"],
+        "CODE_OF_CONDUCT.md": [title: "Code of Conduct"],
+        "LICENSE.md": [title: "License"],
+        "README.md": [title: "Overview"]
+      ],
+      main: "readme",
+      source_url: @source_url,
+      source_ref: "v#{@version}",
+      formatters: ["html"]
     ]
   end
 
   defp preferred_cli_env do
     [
+      docs: :docs,
+      "hex.publish": :docs,
       coveralls: :test,
       "coveralls.travis": :test,
       "coveralls.detail": :test,

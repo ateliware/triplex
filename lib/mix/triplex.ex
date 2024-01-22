@@ -57,6 +57,14 @@ defmodule Mix.Triplex do
     path
   end
 
+  @doc """
+  Generates a nicely formatted timestamp
+  """
+  def timestamp() do
+    {{y, m, d}, {hh, mm, ss}} = :calendar.universal_time()
+    "#{y}#{pad(m)}#{pad(d)}#{pad(hh)}#{pad(mm)}#{pad(ss)}"
+  end
+
   defp raise_missing_migrations(path, repo) do
     Mix.raise("""
     Could not find migrations directory #{inspect(path)}

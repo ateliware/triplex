@@ -1,5 +1,17 @@
 # Changelog
 
+### Added
+
+- New mix task `mix triplex.run_seeds` to run tenant seed files.
+  - Seeds file is expected at `priv/YOUR_REPO/tenant_seeds.exs`.
+  - `tenant` (string) and `repo` (Ecto repo module) are available as bindings inside the seeds file.
+  - `--tenant` / `-t` option to run seeds for a specific tenant only; omitting it runs seeds for all tenants.
+  - `--quiet` option to suppress progress output.
+  - Full command reference:
+    - `mix triplex.run_seeds` — seed all tenants
+    - `mix triplex.run_seeds --tenant acme` — seed only `acme`
+    - `mix triplex.run_seeds -t acme -r MyApp.Repo` — seed only `acme` on a specific repo
+    
 ### MyXQL Support
 
 - I created a support for myxql package and mariaex package was removed,

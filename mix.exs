@@ -47,14 +47,15 @@ defmodule Triplex.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [
-      {:credo, "~> 0.8.10", only: [:test, :dev], optional: true, runtime: false},
-      {:ecto_sql, "~> 3.4"},
-      {:ex_doc, "~> 0.18.0", only: :dev},
-      {:excoveralls, "~> 0.10", only: :test},
+      {:credo, "~> 1.7", only: [:test, :dev], optional: true, runtime: false},
+      {:ecto_sql, "~> 3.11"},
+      {:ex_doc, "~> 0.34", only: :dev},
+      {:excoveralls, "~> 0.18", only: :test},
       {:inch_ex, ">= 0.0.0", only: :docs},
-      {:plug, "~> 1.6", optional: true},
-      {:postgrex, ">= 0.15.0", optional: true},
-      {:myxql, ">= 0.3.0", optional: true},
+      {:ssl_verify_fun, "~> 1.1.7", manager: :rebar3, override: true},
+      {:plug, "~> 1.16", optional: true},
+      {:postgrex, ">= 0.17.0", optional: true},
+      {:myxql, ">= 0.6.0", optional: true},
       {:decimal, ">= 1.6.0"}
     ]
   end

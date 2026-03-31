@@ -23,7 +23,8 @@ defmodule Mix.Triplex do
 
   @aliases [
     r: :repo,
-    n: :step
+    n: :step,
+    t: :tenant
   ]
 
   @switches [
@@ -38,7 +39,8 @@ defmodule Mix.Triplex do
     strict_version_order: :boolean,
     repo: [:keep, :string],
     no_compile: :boolean,
-    no_deps_check: :boolean
+    no_deps_check: :boolean,
+    tenant: :string
   ]
 
   @doc """
@@ -70,6 +72,60 @@ defmodule Mix.Triplex do
     make sure your repository has been properly configured
     and the configured path exists.
     """)
+  end
+
+  @doc """
+  Runs the tenant seeds for every tenant in the given repos.
+
+  When `--tenant` is supplied in `args`, seeds are executed only for that
+  specific tenant. Otherwise seeds are executed for all tenants returned by
+  `Triplex.all/1`.
+
+  The seeds file is expected at `priv/YOUR_REPO/tenant_seeds.exs`. Inside the
+  file the bindings `tenant` (string) and `repo` (Ecto repo module) are
+  available.
+  """
+  def run_tenant_seeds(args, runner \\ &default_seed_runner/3) do
+    repos = Ecto.parse_repo(args)
+    {opts, _} = OptionParser.parse!(args, strict: @switches, aliases: @aliases)
+
+    Enum.each(repos, &run_tenant_seeds_for_repo(&1, args, opts, runner))
+  end
+
+  defp default_seed_runner(repo, seeds_file, tenant) do
+    seed_content = File.read!(seeds_file)
+    Code.eval_string(seed_content, [tenant: tenant, repo: repo], file: seeds_file)
+  end
+
+  defp run_tenant_seeds_for_repo(repo, args, opts, runner) do
+    Ecto.ensure_repo(repo, args)
+    seeds_file = Path.join(source_repo_priv(repo), "tenant_seeds.exs")
+
+    unless File.exists?(seeds_file) do
+      Mix.raise("""
+      Seeds file not found at #{inspect(seeds_file)} for repo #{inspect(repo)}.
+
+      Create a file at the path above to define your tenant seeds.
+      """)
+    end
+
+    {:ok, pid, _apps} = ensure_started(repo, opts)
+
+    tenants =
+      case Keyword.fetch(opts, :tenant) do
+        {:ok, tenant} -> [tenant]
+        :error -> Triplex.all(repo)
+      end
+
+    Enum.each(tenants, fn tenant ->
+      unless opts[:quiet] do
+        Mix.shell().info("Running seeds for tenant #{inspect(tenant)}...")
+      end
+
+      runner.(repo, seeds_file, tenant)
+    end)
+
+    pid && repo.stop()
   end
 
   @doc """

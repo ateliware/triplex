@@ -56,7 +56,7 @@ defmodule Mix.Tasks.Triplex.Gen.Migration do
             |> Triplex.migrations_path()
             |> Path.relative_to(Project.app_path())
 
-          file = Path.join(path, "#{timestamp()}_#{Macro.underscore(name)}.exs")
+          file = Path.join(path, "#{Mix.Triplex.timestamp()}_#{Macro.underscore(name)}.exs")
           Generator.create_directory(path)
 
           assigns = [
@@ -74,13 +74,6 @@ defmodule Mix.Tasks.Triplex.Gen.Migration do
       end
     end)
   end
-
-  defp timestamp do
-    {{y, m, d}, {hh, mm, ss}} = :calendar.universal_time()
-    "#{y}#{pad(m)}#{pad(d)}#{pad(hh)}#{pad(mm)}#{pad(ss)}"
-  end
-
-  defp pad(i), do: i |> to_string() |> String.pad_leading(2, "0")
 
   Generator.embed_template(:migration, """
   defmodule <%= inspect @mod %> do

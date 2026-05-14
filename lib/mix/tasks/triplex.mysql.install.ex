@@ -26,12 +26,12 @@ defmodule Mix.Tasks.Triplex.Mysql.Install do
     Enum.each(repos, fn repo ->
       Ecto.ensure_repo(repo, args)
 
-      if repo.__adapter__ != MyXQL do
+      if repo.__adapter__() != MyXQL do
         Mix.raise("the tenant table only makes sense for MySQL repositories")
       end
 
       path = Path.relative_to(Migrator.migrations_path(repo), Project.app_path())
-      file = Path.join(path, "#{timestamp()}_#{@migration_name}.exs")
+      file = Path.join(path, "#{Mix.Triplex.timestamp()}_#{@migration_name}.exs")
       Generator.create_directory(path)
 
       Generator.create_file(
@@ -44,13 +44,6 @@ defmodule Mix.Tasks.Triplex.Mysql.Install do
       )
     end)
   end
-
-  defp timestamp do
-    {{y, m, d}, {hh, mm, ss}} = :calendar.universal_time()
-    "#{y}#{pad(m)}#{pad(d)}#{pad(hh)}#{pad(mm)}#{pad(ss)}"
-  end
-
-  defp pad(i), do: i |> to_string() |> String.pad_leading(2, "0")
 
   Generator.embed_template(:migration, """
   defmodule <%= Module.concat([@repo, Migrations, Macro.camelize(@migration_name)]) %> do

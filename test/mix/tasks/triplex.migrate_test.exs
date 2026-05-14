@@ -3,7 +3,7 @@ defmodule Mix.Tasks.Triplex.MigrateTest do
 
   alias Mix.Tasks.Triplex.Migrate
 
-  @repos [Triplex.PGTestRepo, Triplex.MSTestRepo]
+  @repos [Triplex.PGTestRepo, Triplex.MySQLTestRepo]
 
   test "runs the migrator function" do
     for repo <- @repos do

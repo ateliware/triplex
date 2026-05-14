@@ -1,12 +1,17 @@
 # Changelog
 
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
 ### MyXQL Support
 
 - I created a support for myxql package and mariaex package was removed,
 to use this update you will need to add the myxql package e.g `{:myxql, "~> 0.3.0"}`
 in your `mix.exs` file.
 
-## 1.3.0
+## v1.3.0 (2019-05-31)
 
 ### Bug fixes
 
@@ -59,7 +64,7 @@ end)
 For more details about these function check the online documentation for `Triplex.create/1,2`
 and `Triplex.create_schema/1,2,3`.
 
-## 1.3.0-rc.1
+## v1.3.0-rc.1 (2019-03-07)
 
 ### Bug fixes
 
@@ -69,7 +74,7 @@ and `Triplex.create_schema/1,2,3`.
 
 - docker-compose configuration that allows easy setup for test databases.
 
-## 1.3.0-rc.0
+## v1.3.0-rc.0 (2019-03-03)
 
 ### Added
 

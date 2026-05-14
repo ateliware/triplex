@@ -16,6 +16,6 @@ defmodule Triplex.Config do
     migrations_path: "tenant_migrations",
     reserved_tenants: [],
     tenant_field: :id,
-    tenant_table: :tenants
+    tenant_table: :"information_schema.schemata"
   ]
 end

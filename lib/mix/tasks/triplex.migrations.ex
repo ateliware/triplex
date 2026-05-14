@@ -6,6 +6,8 @@ defmodule Mix.Tasks.Triplex.Migrations do
   alias Mix.Ecto
   alias Mix.Triplex, as: MTriplex
 
+  alias Triplex
+
   @shortdoc "Displays the repository migration status"
   @recursive true
 
@@ -42,12 +44,12 @@ defmodule Mix.Tasks.Triplex.Migrations do
       Enum.map(repos, fn repo ->
         Ecto.ensure_repo(repo, args)
         MTriplex.ensure_tenant_migrations_path(repo)
-        {:ok, pid, _} = MTriplex.ensure_started(repo, all: true)
+        {:ok, _pid, _} = MTriplex.ensure_started(repo, all: true)
 
         migration_lists = migrations.(repo, Triplex.migrations_path(repo))
         tenants_state = tenants_state(repo, migration_lists)
 
-        pid && repo.stop(pid)
+        repo.stop()
 
         tenants_state
       end)
@@ -57,7 +59,7 @@ defmodule Mix.Tasks.Triplex.Migrations do
 
   defp tenants_state(repo, migration_lists) do
     Enum.map_join(Triplex.all(repo), fn tenant ->
-      tenant_versions = Migrator.migrated_versions(repo, prefix: tenant)
+      tenant_versions = Migrator.migrated_versions(repo, prefix: Triplex.to_prefix(tenant))
       repo_status = repo_status(migration_lists, tenant_versions)
 
       """

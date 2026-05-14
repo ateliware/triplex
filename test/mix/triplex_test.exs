@@ -1,7 +1,7 @@
 defmodule Mix.TriplexTest do
   use ExUnit.Case, async: true
 
-  @repos [Triplex.PGTestRepo, Triplex.MSTestRepo]
+  import Triplex.TestHelper
 
   defmodule Repo do
     def start_link(opts) do
@@ -24,10 +24,10 @@ defmodule Mix.TriplexTest do
     end
   end
 
-  setup do
-    for repo <- @repos do
-      Ecto.Adapters.SQL.Sandbox.mode(repo, :auto)
+  setup_all :setup_repos
 
+  setup do
+    for repo <- repos() do
       drop_tenants = fn ->
         Triplex.drop("test1", repo)
         Triplex.drop("test2", repo)
@@ -58,7 +58,7 @@ defmodule Mix.TriplexTest do
       Mix.Triplex.ensure_tenant_migrations_path(LostRepo)
     end
 
-    for repo <- @repos do
+    for repo <- repos() do
       folder = repo |> Module.split() |> List.last() |> Macro.underscore()
 
       assert Mix.Triplex.ensure_tenant_migrations_path(repo) ==
@@ -67,7 +67,7 @@ defmodule Mix.TriplexTest do
   end
 
   test "runs migration for each tenant, with the correct prefix" do
-    for repo <- @repos do
+    for repo <- repos() do
       Triplex.create("test1", repo)
       Triplex.create("test2", repo)
 
@@ -88,7 +88,7 @@ defmodule Mix.TriplexTest do
   end
 
   test "does not run if there are no tenants" do
-    for repo <- @repos do
+    for repo <- repos() do
       Mix.Triplex.run_tenant_migrations(["-r", repo], :down, fn _, _, _, _ ->
         send(self(), :error)
 

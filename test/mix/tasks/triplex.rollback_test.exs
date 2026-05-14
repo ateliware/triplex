@@ -3,7 +3,7 @@ defmodule Mix.Tasks.Triplex.RollbackTest do
 
   alias Mix.Tasks.Triplex.Rollback
 
-  @repos [Triplex.PGTestRepo, Triplex.MSTestRepo]
+  @repos [Triplex.PGTestRepo, Triplex.MySQLTestRepo]
 
   test "runs the migrator function" do
     for repo <- @repos do

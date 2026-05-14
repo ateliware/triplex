@@ -4,26 +4,32 @@ defmodule Mix.Tasks.Triplex.MigrationsTest do
   alias Mix.Tasks.Triplex.Migrations
   alias Ecto.Migrator
 
-  @repos [Triplex.PGTestRepo, Triplex.MSTestRepo]
+  import Triplex.TestHelper
+
+  def drop_tenants(_ \\ nil) do
+    for repo <- repos() do
+      Triplex.all(repo)
+      Triplex.drop("migrations_test_down", repo)
+      Triplex.drop("migrations_test_up", repo)
+    end
+  end
+
+  setup_all :setup_repos
 
   setup do
-    for repo <- @repos do
-      Ecto.Adapters.SQL.Sandbox.mode(repo, :auto)
+    drop_tenants()
 
-      drop_tenants = fn ->
-        Triplex.drop("migrations_test_down", repo)
-        Triplex.drop("migrations_test_up", repo)
-      end
-
-      drop_tenants.()
-      on_exit(drop_tenants)
-    end
-
-    :ok
+    on_exit(fn ->
+      #  Migrations.run *STOPS* the repository! Makes sense run as a task, but not in tests
+      setup_repos(nil)
+      drop_tenants()
+    end)
   end
 
   test "runs migration for each tenant, with the correct prefix" do
-    for repo <- @repos do
+    #     drop_tenants()
+
+    for repo <- repos() do
       Triplex.create_schema("migrations_test_down", repo)
       Triplex.create("migrations_test_up", repo)
 
